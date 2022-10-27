@@ -1,0 +1,25 @@
+[package]
+name = "replisdk-rust"
+version = "0.1.0"
+description = "All in one SDK to develop Replicante ecosystem components in Rust"
+
+edition = "2021"
+rust-version = "1.60"
+
+homepage = "https://replicante.io"
+license = "MIT"
+repository = "https://github.com/replicante-io/replisdk-rust"
+
+# Exclude CI/dev files from cargo packages.
+exclude = ["/ci"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[features]
+## Platform features
+# Enable all platform related features.
+platform = ["platform-models"]
+# Enable definitions of platform data models.
+platform-models = []
+
+[dependencies]
