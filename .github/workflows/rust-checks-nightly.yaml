@@ -23,5 +23,7 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - name: Replicante Development Tool
+      - name: Replicante SDK
         run: ci/check-workspace.sh SDK Cargo.toml
+      - name: Experimental Replicante SDK
+        run: ci/check-workspace.sh "Experimental SDK" experimental/Cargo.toml

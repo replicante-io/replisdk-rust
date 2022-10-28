@@ -25,8 +25,10 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - name: Replicante Development Tool
+      - name: Replicante SDK
         run: ci/check-workspace.sh --full SDK Cargo.toml
+      - name: Experimental Replicante SDK
+        run: ci/check-workspace.sh --full "Experimental SDK" experimental/Cargo.toml
 
   # Earliest version of rust supported (breaking clippy check).
   check-min-rust:
@@ -43,5 +45,7 @@ jobs:
           override: true
           components: rustfmt, clippy
 
-      - name: Replicante Development Tool
-        run: ci/check-workspace.sh --full SDK Cargo.toml
+      - name: Replicante SDK
+        run: ci/check-workspace.sh SDK Cargo.toml
+      - name: Experimental Replicante SDK
+        run: ci/check-workspace.sh "Experimental SDK" experimental/Cargo.toml

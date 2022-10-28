@@ -1,0 +1,15 @@
+[package]
+name = "replisdk-proc"
+version = "0.1.0"
+description = "Procedural macros crate for replisdk"
+
+edition = "2021"
+rust-version = "1.60"
+
+homepage = "https://replicante.io"
+license = "MIT"
+repository = "https://github.com/replicante-io/replisdk-rust"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]

@@ -13,6 +13,7 @@ for_version() {
 
   echo "Run CI for version ${version}"
   rustup run "${version}" ci/check-workspace.sh ${full_mode} SDK Cargo.toml
+  rustup run "${version}" ci/check-workspace.sh ${full_mode} "Experimental SDK" experimental/Cargo.toml
 }
 
 for_version "stable"

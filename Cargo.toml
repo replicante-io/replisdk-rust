@@ -1,5 +1,5 @@
 [package]
-name = "replisdk-rust"
+name = "replisdk"
 version = "0.1.0"
 description = "All in one SDK to develop Replicante ecosystem components in Rust"
 
@@ -11,7 +11,10 @@ license = "MIT"
 repository = "https://github.com/replicante-io/replisdk-rust"
 
 # Exclude CI/dev files from cargo packages.
-exclude = ["/ci"]
+exclude = [
+  "/.github",
+  "/ci",
+]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -24,3 +27,16 @@ platform-models = []
 
 [dependencies]
 serde = { version = "^1.0", features = ["derive"] }
+
+# Always depend on the proc macros crate matching our exact version!
+replisdk-proc = { version = "=0.1.0", path = "./proc"}
+
+[package.metadata.docs.rs]
+all-features = true
+
+[workspace]
+members = [
+  "experimental",
+  "experimental-proc",
+  "proc",
+]

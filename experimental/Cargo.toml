@@ -1,0 +1,18 @@
+[package]
+name = "replisdk-experimental"
+version = "0.1.0"
+description = "Experimental features and additions to the Repicante SDK for rust"
+
+edition = "2021"
+rust-version = "1.60"
+
+homepage = "https://replicante.io"
+license = "MIT"
+repository = "https://github.com/replicante-io/replisdk-rust"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+# Always depend on the proc macros crate matching our exact version!
+replisdk-experimental-proc = { version = "=0.1.0", path = "../experimental-proc"}

@@ -73,5 +73,6 @@ fi
 log_group_end
 
 log_group "Run ${NAME} doc"
-cargo doc --manifest-path "${MANIFEST}" "${ALL_FEATURES}" --no-deps
+# Use --no-deps to skip documenting 3rd-party crates but also --all for all worksapce members.
+cargo doc --manifest-path "${MANIFEST}" "${ALL_FEATURES}" --no-deps --all
 log_group_end
