@@ -1,27 +1,43 @@
 # Releasing RepliSDK
 
-All Replicante projects must be released using the `replidev release` commands.
-These commands will guide the you through release tasks,
-automating the repetitive parts and performing checks along the way.
+NOTE: a simpler release process more in line with other Replicante projects is needed.
 
-```bash
-# Prepare the repository for release.
-# This command will guide you to update changelogs and versions.
-$ replidev release prep
+Currently, release if fairly manual.
+Be mindful that the order is also important:
 
-# Commit any changes done during the prep phase.
-$ git commit .
+1. Update crate versions as needed:
+   1. `replisdk-experimental-proc`.
+   2. `replisdk-experimental` and the reference to `replisdk-experimental-proc`.
+   3. `replisdk-proc`.
+   4. `replisdk` and the reference to `replisdk-proc`.
+2. Update the changelogs:
+   1. `experimental/CHANGELOG.md`.
+   2. `CHANGELOG.md`.
+3. Commit all changes (but do not push).
+4. Check all packages:
 
-# Run checks to ensure the release is ready.
-$ replidev release check
+   ```bash
+   cargo publish --dry-run -p replisdk-experimental-proc
+   cargo publish --dry-run -p replisdk-experimental
+   cargo publish --dry-run -p replisdk-proc
+   cargo publish --dry-run -p replisdk
+   ```
 
-# Once all changes are committed and the checks pass publish the release.
-# This will also publish crates in the project and tag the current commit.
-$ replidev release publish
+5. Tag the release:
+   * Tags are based on `replisdk` version.
+   * When releasing `replisdk-experimental` only skip tagging.
+6. Push commit and tags:
 
-# Push the release commit (if needed) and the release tag.
-$ git push
-$ git push --tags
+   ```bash
+   git push
+   git push --tags
+   ```
 
-# Create the new release in GitHub.
-```
+7. Publish the crates:
+
+   ```bash
+   cargo publish -p replisdk-experimental-proc
+   cargo publish -p replisdk-experimental
+   cargo publish -p replisdk-proc
+   cargo publish -p replisdk
+   ```
