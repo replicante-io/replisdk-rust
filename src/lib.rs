@@ -48,5 +48,8 @@
 //! [Rust Lang]: https://www.rust-lang.org/
 #![deny(missing_docs)]
 
+#[cfg(any(feature = "replicore-models"))]
+pub mod core;
+
 #[cfg(any(feature = "platform-models"))]
 pub mod platform;

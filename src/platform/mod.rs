@@ -28,5 +28,5 @@
 //! ## Node deprovisioning
 //!
 //! Node deprovisioning is still a work in progress and will be added soon.
-#[cfg(any(feature = "platform-models"))]
+#[cfg(feature = "platform-models")]
 pub mod models;

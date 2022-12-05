@@ -19,6 +19,12 @@ exclude = [
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
+## RepliCore features
+# Enable all Replicante Core related features.
+replicore = ["replicore-models"]
+# Enable definitions of replicore data models.
+replicore-models = ["serde", "serde_json"]
+
 ## Platform features
 # Enable all platform related features.
 platform = ["platform-models"]
