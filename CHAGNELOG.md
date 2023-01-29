@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
-- Platform node provision models.
+- Platform API models for cluster discovery.
+- Platform deprovisioning models.
+- Platform provisioning models.
 - Platform models for Core API.
 
 ## 0.1.0 - 2022-10-28

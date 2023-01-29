@@ -62,6 +62,13 @@ pub struct ClusterDiscovery {
     pub nodes: Vec<ClusterDiscoveryNode>,
 }
 
+/// API Response schema for a Platform node provision action.
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+pub struct ClusterDiscoveryResponse {
+    /// List of clusters on the platform.
+    pub clusters: Vec<ClusterDiscovery>,
+}
+
 /// Information about an individual cluster node.
 #[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct ClusterDiscoveryNode {
