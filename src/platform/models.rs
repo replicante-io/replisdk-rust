@@ -46,10 +46,10 @@ pub struct ClusterDefinitionNodeGroup {
     pub node_class: String,
 
     /// The version of the store software for nodes in this group
-    /// 
+    ///
     /// Overrides the `cluster.store_version` value for individual node groups.
     #[serde(default)]
-    pub store_version: Option<String>
+    pub store_version: Option<String>,
 }
 
 /// Information about a cluster and all existing nodes within.

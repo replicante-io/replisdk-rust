@@ -34,6 +34,21 @@
 //!
 //! * `platform-models`: Enable definitions of (infrastructure) platform data models.
 //!
+//! ## RepliCore
+//!
+//! The following features are available for the Replicante Core area:
+//!
+//! * `replicore-models`: Enable definitions of Replicante Core data and API models.
+//!
+//! ## Runtime
+//!
+//! The runtime provides utilities to manage general features and needs of the process lifecycle.
+//!
+//! Unlike with other areas the `runtime` feature does not enable ALL available features but only
+//! process shutdown handling, with other features added optionally.
+//!
+//! * `runtime`: Enable tools to manage process shutdown on error or at user's request.
+//!
 //! # The experimental crate
 //!
 //! While the SDK is evolving and the ecosystem growing it is essential to balance
@@ -53,3 +68,6 @@ pub mod core;
 
 #[cfg(any(feature = "platform-models"))]
 pub mod platform;
+
+#[cfg(feature = "runtime")]
+pub mod runtime;

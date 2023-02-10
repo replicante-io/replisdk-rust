@@ -80,7 +80,8 @@ pub struct PlatformTransportHttp {
     /// This option disables protection provided by HTTPS certificates
     /// and should only be used for testing.
     ///
-    /// Consider using [`tls_ca_bundle`] to validate custom remote certificate authorities.
+    /// Consider using [`PlatformTransportHttp.tls_ca_bundle`]
+    /// to validate custom remote certificate authorities.
     #[serde(default = "PlatformTransportHttp::default_tls_skip_verify")]
     pub tls_insecure_skip_verify: bool,
 }
