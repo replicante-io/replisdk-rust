@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - Platform API models for cluster discovery.
 - Platform deprovisioning models.
+- Platform implementation framework: platform trait definition and default context.
 - Platform models for Core API.
 - Platform provisioning models.
 - Runtime utility to manage async process and shutdown.

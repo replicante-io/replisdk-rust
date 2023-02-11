@@ -27,9 +27,11 @@ replicore-models = ["serde", "serde_json"]
 
 ## Platform features
 # Enable all platform related features.
-platform = ["platform-models"]
+platform = ["platform-framework", "platform-models"]
 # Enable definitions of platform data models.
 platform-models = ["serde", "serde_json"]
+# Enable Platform framework code.
+platform-framework = ["anyhow", "platform-models", "slog"]
 
 ## Runtime features.
 # Enable access to the ShutdownManager object and core tokio-based runtime utilities.

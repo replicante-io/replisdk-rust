@@ -30,3 +30,6 @@
 //! Node deprovisioning is still a work in progress and will be added soon.
 #[cfg(feature = "platform-models")]
 pub mod models;
+
+#[cfg(feature = "platform-framework")]
+pub mod framework;
