@@ -7,8 +7,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- Error type to bridge anyhow and actix-web response rendering.
 - Platform API models for cluster discovery.
 - Platform deprovisioning models.
+- Platform implementation framework: actix-web service wrapper.
 - Platform implementation framework: platform trait definition and default context.
 - Platform models for Core API.
 - Platform provisioning models.

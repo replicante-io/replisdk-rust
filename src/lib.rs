@@ -32,6 +32,8 @@
 //!
 //! The following features are available for the platforms area:
 //!
+//! * `platform-framework`: Enable tools to implement Replicante Platform servers.
+//! * `platform-framework_actix`: Enable utilities to run `IPlatform`s in `actix_web` servers.
 //! * `platform-models`: Enable definitions of (infrastructure) platform data models.
 //!
 //! ## RepliCore
@@ -48,6 +50,12 @@
 //! process shutdown handling, with other features added optionally.
 //!
 //! * `runtime`: Enable tools to manage process shutdown on error or at user's request.
+//!
+//! ## utilities
+//!
+//! A configurable collection of various utilities and code for common tasks.
+//!
+//! * `utils-actix_error`: An `actix_web` error type that works with `anyhow::Error`.
 //!
 //! # The experimental crate
 //!
@@ -66,8 +74,11 @@
 #[cfg(any(feature = "replicore-models"))]
 pub mod core;
 
-#[cfg(any(feature = "platform-models"))]
+#[cfg(any(feature = "platform-framework", feature = "platform-models"))]
 pub mod platform;
 
 #[cfg(feature = "runtime")]
 pub mod runtime;
+
+#[cfg(feature = "utils-actix_error")]
+pub mod utils;

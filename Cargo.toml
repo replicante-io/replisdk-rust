@@ -19,26 +19,32 @@ exclude = [
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
+## Platform features
+# Enable all platform related features.
+platform = ["platform-framework", "platform-models"]
+# Enable Platform framework code.
+platform-framework = ["anyhow", "platform-models", "slog"]
+platform-framework_actix = ["actix-web", "platform-framework", "utils-actix_error"]
+# Enable definitions of platform data models.
+platform-models = ["serde", "serde_json"]
+
 ## RepliCore features
 # Enable all Replicante Core related features.
 replicore = ["replicore-models"]
 # Enable definitions of replicore data models.
 replicore-models = ["serde", "serde_json"]
 
-## Platform features
-# Enable all platform related features.
-platform = ["platform-framework", "platform-models"]
-# Enable definitions of platform data models.
-platform-models = ["serde", "serde_json"]
-# Enable Platform framework code.
-platform-framework = ["anyhow", "platform-models", "slog"]
-
 ## Runtime features.
 # Enable access to the ShutdownManager object and core tokio-based runtime utilities.
 runtime = ["anyhow", "futures", "slog", "thiserror", "tokio"]
 
+## Various utilities and common tasks.
+# Provides an `actix_web` error type that works with `anyhow::Error`.
+utils-actix_error = ["actix-web", "anyhow", "serde_json", "thiserror"]
+
 [dependencies]
-anyhow = { version = "^1.0", optional = true }
+actix-web = { version = "^4.3", optional = true }
+anyhow = { version = "^1.0", features = ["backtrace"], optional = true }
 futures = { version = "^0.3", optional = true }
 serde = { version = "^1.0", optional = true, features = ["derive"] }
 serde_json = { version = "^1.0", optional = true }
