@@ -99,6 +99,9 @@ pub enum ResponseStrategy {
     /// Render a JSON object with error information.
     Json,
 
+    /// Render a JSON object with the provided body.
+    JsonWithBody(serde_json::Value),
+
     /// Render a JSON object with error information, including a backtrace if available.
     JsonWithTrace,
 }
@@ -111,6 +114,7 @@ impl std::fmt::Debug for ResponseStrategy {
                 .field(&"<Fn(StatusCode, &anyhow::Error) -> HttpResponse<BoxBody>>")
                 .finish(),
             Self::Json => write!(f, "Json"),
+            Self::JsonWithBody(body) => f.debug_tuple("JsonWithBody").field(body).finish(),
             Self::JsonWithTrace => write!(f, "JsonWithTrace"),
         }
     }
@@ -122,6 +126,7 @@ impl ResponseStrategy {
         match self {
             Self::Custom(strategy) => self.render_custom(strategy, error),
             Self::Json => self.render_json(error, false),
+            Self::JsonWithBody(body) => self.render_json_body(error, body),
             Self::JsonWithTrace => self.render_json(error, true),
         }
     }
@@ -160,6 +165,20 @@ impl ResponseStrategy {
         let mut response = HttpResponse::build(status);
         response.insert_header((actix_web::http::header::CONTENT_TYPE, "application/json"));
         response.json(serde_json::Value::from(payload))
+    }
+
+    /// Render a JSON object with the provided body.
+    fn render_json_body(&self, error: &Error, body: &serde_json::Value) -> HttpResponse<BoxBody> {
+        let status = error.status_code();
+        let mut response = HttpResponse::build(status);
+        response.insert_header((actix_web::http::header::CONTENT_TYPE, "application/json"));
+        response.json(body)
+    }
+}
+
+impl From<serde_json::Value> for ResponseStrategy {
+    fn from(body: serde_json::Value) -> ResponseStrategy {
+        ResponseStrategy::JsonWithBody(body)
     }
 }
 
