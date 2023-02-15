@@ -22,18 +22,23 @@ pub use {self::actix::into_actix_service, self::actix::ActixServiceFactory};
 /// The implementation MUST respect the [Platform Specification].
 ///
 /// [Platform Specification]: https://www.replicante.io/docs/spec/main/platform/into/
+#[async_trait::async_trait]
 pub trait IPlatform: 'static {
     /// Additional context passed to requests.
     type Context;
 
     /// Deprovision (terminate) a node in a cluster.
-    fn deprovision(&self, context: &Self::Context, request: NodeDeprovisionRequest) -> Result<()>;
+    async fn deprovision(
+        &self,
+        context: &Self::Context,
+        request: NodeDeprovisionRequest,
+    ) -> Result<()>;
 
     /// List clusters on the platform.
-    fn discover(&self, context: &Self::Context) -> Result<ClusterDiscoveryResponse>;
+    async fn discover(&self, context: &Self::Context) -> Result<ClusterDiscoveryResponse>;
 
     /// Provision (create) a new node for a cluster.
-    fn provision(
+    async fn provision(
         &self,
         context: &Self::Context,
         request: NodeProvisionRequest,

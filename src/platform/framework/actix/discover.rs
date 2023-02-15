@@ -13,6 +13,6 @@ where
     P: IPlatform,
     P::Context: FromRequest,
 {
-    let response = platform.discover(&context)?;
+    let response = platform.discover(&context).await?;
     Ok(HttpResponse::Ok().json(response))
 }

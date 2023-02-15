@@ -20,6 +20,6 @@ where
     P::Context: FromRequest,
 {
     let payload = payload.into_inner();
-    let response = platform.provision(&context, payload)?;
+    let response = platform.provision(&context, payload).await?;
     Ok(HttpResponse::Ok().json(response))
 }

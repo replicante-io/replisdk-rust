@@ -23,7 +23,7 @@ exclude = [
 # Enable all platform related features.
 platform = ["platform-framework", "platform-models"]
 # Enable Platform framework code.
-platform-framework = ["anyhow", "platform-models", "slog"]
+platform-framework = ["anyhow", "async-trait", "futures", "platform-models", "slog"]
 platform-framework_actix = ["actix-web", "platform-framework", "utils-actix_error"]
 # Enable definitions of platform data models.
 platform-models = ["serde", "serde_json"]
@@ -45,6 +45,7 @@ utils-actix_error = ["actix-web", "anyhow", "serde_json", "thiserror"]
 [dependencies]
 actix-web = { version = "^4.3", optional = true }
 anyhow = { version = "^1.0", features = ["backtrace"], optional = true }
+async-trait = { version = "^0.1", optional = true }
 futures = { version = "^0.3", optional = true }
 serde = { version = "^1.0", optional = true, features = ["derive"] }
 serde_json = { version = "^1.0", optional = true }

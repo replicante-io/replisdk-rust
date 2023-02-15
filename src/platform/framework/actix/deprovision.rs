@@ -20,6 +20,6 @@ where
     P::Context: FromRequest,
 {
     let payload = payload.into_inner();
-    platform.deprovision(&context, payload)?;
+    platform.deprovision(&context, payload).await?;
     Ok(HttpResponse::NoContent())
 }

@@ -31,15 +31,16 @@ impl FakePlatform {
     }
 }
 
+#[async_trait::async_trait]
 impl IPlatform for FakePlatform {
     type Context = DefaultContext;
 
-    fn deprovision(&self, _: &Self::Context, _request: NodeDeprovisionRequest) -> Result<()> {
+    async fn deprovision(&self, _: &Self::Context, _request: NodeDeprovisionRequest) -> Result<()> {
         self.deprovision_called.store(true, Ordering::SeqCst);
         Ok(())
     }
 
-    fn discover(&self, _: &Self::Context) -> Result<ClusterDiscoveryResponse> {
+    async fn discover(&self, _: &Self::Context) -> Result<ClusterDiscoveryResponse> {
         let cluster_a = ClusterDiscovery {
             cluster_id: "a".into(),
             nodes: vec![
@@ -71,7 +72,7 @@ impl IPlatform for FakePlatform {
         })
     }
 
-    fn provision(
+    async fn provision(
         &self,
         _: &Self::Context,
         _: NodeProvisionRequest,
