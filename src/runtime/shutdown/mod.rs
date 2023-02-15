@@ -85,9 +85,34 @@ pub enum ShutdownError {
 /// These are sent when the shutdown sequence begins and can be used to stop working and clean up
 /// when the process needs to exit.
 ///
+/// # Example
+///
+/// ```ignore
+/// let exit = ShutdownManager::<()>::builder()
+///     .watch_signal_with_default()
+///     .watch_tokio(tokio::spawn(async {
+///         let mut count = 0;
+///         loop {
+///             println!("Task 1: {}", count);
+///             count += 1;
+///             tokio::time::sleep(std::time::Duration::from_secs(1)).await;
+///         }
+///     }))
+///     .watch_tokio(tokio::spawn(async {
+///         let mut count = 0;
+///         loop {
+///             println!("Task 2: {}", count);
+///             count += 1;
+///             tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+///         }
+///     }))
+///     .build();
+/// exit.wait().await.unwrap();
+/// ```
+///
 /// [`tokio::task`s]: tokio::task
 pub struct ShutdownManager<T> {
-    exit_errors_logger: Option<Logger>,
+    exit_logger: Option<Logger>,
     grace_timeout: Duration,
     shutdown_notification_sender: watch::Sender<bool>,
     signal_exit_value: Option<Result<T>>,
@@ -101,6 +126,7 @@ impl<T> ShutdownManager<T> {
     pub fn builder() -> ShutdownManagerBuilder<T> {
         let (sender, receiver) = watch::channel(false);
         ShutdownManagerBuilder {
+            exit_logger: None,
             grace_duration: Duration::from_secs(DEFAULT_SHUTDOWN_GRACE_TIMEOUT),
             shutdown_notification_receiver: receiver,
             shutdown_notification_sender: sender,
@@ -114,10 +140,17 @@ impl<T> ShutdownManager<T> {
     /// Graceful exit conditions and shutdown sequence are documented in [`ShutdownManager`].
     pub async fn wait(mut self) -> Result<T> {
         // Wait for the first exit condition that triggers.
-        let tokio_task_next = self.tasks.next();
+        let exit_on_tokio_task = ShutdownManager::exit_condition_tokio_task(
+            self.tasks.next(),
+            self.exit_logger.as_ref(),
+        );
+        let exit_on_signal = ShutdownManager::exit_condition_signal(
+            self.signal_exit_value,
+            self.exit_logger.as_ref(),
+        );
         let exit = tokio::select! {
-            exit = ShutdownManager::exit_condition_tokio_task(tokio_task_next) => exit,
-            exit = ShutdownManager::exit_condition_signal(self.signal_exit_value) => exit,
+            exit = exit_on_tokio_task => exit,
+            exit = exit_on_signal => exit,
         };
 
         // Notify any interested parties about the graceful shutdown.
@@ -131,7 +164,7 @@ impl<T> ShutdownManager<T> {
         // - The shutdown timeout has elapsed.
         let await_all_tokio = async {
             while let Some(task) = self.tasks.next().await {
-                let logger = match &self.exit_errors_logger {
+                let logger = match &self.exit_logger {
                     None => continue,
                     Some(logger) => logger,
                 };
@@ -176,6 +209,9 @@ impl<T> ShutdownManager<T> {
         }
 
         // Return the value/error that triggered shutdown.
+        if let Some(logger) = self.exit_logger {
+            slog::info!(logger, "Graceful shutdown completed");
+        }
         exit
     }
 
@@ -189,14 +225,21 @@ impl<T> ShutdownManager<T> {
     ///
     /// As exit conditions manipulate different [`ShutdownManager`] fields we decompose the
     /// structure in [`ShutdownManager::wait`] and only take the needed fields for this condition.
-    async fn exit_condition_signal(exit_value: Option<Result<T>>) -> Result<T> {
+    async fn exit_condition_signal(
+        exit_value: Option<Result<T>>,
+        logger: Option<&Logger>,
+    ) -> Result<T> {
         // If signal handling is not desired wait forever.
         if exit_value.is_none() {
             std::future::pending::<()>().await;
         }
 
         // Wait for the first signal to trigger shutdown.
-        if let Err(error) = tokio::signal::ctrl_c().await {
+        let signal = tokio::signal::ctrl_c().await;
+        if let Some(logger) = logger {
+            slog::info!(logger, "Received exit signal: beginning graceful shutdown");
+        }
+        if let Err(error) = signal {
             let error = anyhow::anyhow!(error);
             let error = error.context(ShutdownError::SignalError);
             return Err(error);
@@ -215,6 +258,7 @@ impl<T> ShutdownManager<T> {
     /// structure in [`ShutdownManager::wait`] and only take the needed fields for this condition.
     async fn exit_condition_tokio_task(
         task: impl Future<Output = WatchTaskOutput<T>>,
+        logger: Option<&Logger>,
     ) -> Result<T> {
         let task = task.await;
         if task.is_none() {
@@ -222,6 +266,12 @@ impl<T> ShutdownManager<T> {
         }
 
         let first_exit = task.expect("tokio tasks set must have at least one task to get here");
+        if let Some(logger) = logger {
+            slog::info!(
+                logger,
+                "Watched tokio task exited: beginning graceful shutdown",
+            );
+        }
         match first_exit {
             Err(error) if error.is_cancelled() => {
                 Err(anyhow::anyhow!(ShutdownError::TokioTaskCancelled))
@@ -241,6 +291,7 @@ impl<T> ShutdownManager<T> {
 
 /// Build [`ShutdownManager`] instances.
 pub struct ShutdownManagerBuilder<T> {
+    exit_logger: Option<Logger>,
     grace_duration: Duration,
     shutdown_notification_receiver: watch::Receiver<bool>,
     shutdown_notification_sender: watch::Sender<bool>,
@@ -266,7 +317,7 @@ impl<T> ShutdownManagerBuilder<T> {
 
         let tasks = self.tasks.into_iter().collect();
         ShutdownManager {
-            exit_errors_logger: None,
+            exit_logger: self.exit_logger,
             grace_timeout: self.grace_duration,
             shutdown_notification_sender: self.shutdown_notification_sender,
             signal_exit_value: self.signal_exit_value,
@@ -277,6 +328,12 @@ impl<T> ShutdownManagerBuilder<T> {
     /// Set the maximum amount of time to wait for graceful shutdown to complete.
     pub fn graceful_shutdown_timeout(mut self, timeout: Duration) -> ShutdownManagerBuilder<T> {
         self.grace_duration = timeout;
+        self
+    }
+
+    /// Set the logger used to inform of shutdown events and issues.
+    pub fn logger(mut self, logger: Logger) -> ShutdownManagerBuilder<T> {
+        self.exit_logger = Some(logger);
         self
     }
 
