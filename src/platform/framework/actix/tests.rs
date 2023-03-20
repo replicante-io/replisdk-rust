@@ -165,3 +165,77 @@ async fn platform_is_wrapped_in_app() {
     let platform = into_actix_service(FakePlatform::new(), logger);
     let _ = actix_web::App::new().service(platform);
 }
+
+fn node_provision_request<S: Into<String>>(group: S) -> NodeProvisionRequest {
+    NodeProvisionRequest {
+        cluster: crate::platform::models::ClusterDefinition {
+            attributes: Default::default(),
+            cluster_id: "test.cluster".into(),
+            store: "noop".into(),
+            store_version: "0.0.0".into(),
+            nodes: {
+                let mut nodes = std::collections::HashMap::new();
+                nodes.insert(
+                    "default".into(),
+                    crate::platform::models::ClusterDefinitionNodeGroup {
+                        attributes: Default::default(),
+                        desired_count: 3,
+                        node_class: "test".into(),
+                        store_version: None,
+                    },
+                );
+                nodes
+            },
+        },
+        provision: crate::platform::models::NodeProvisionRequestDetails {
+            node_group_id: group.into(),
+        },
+    }
+}
+
+mod resolve_node_group_clone {
+    use super::super::NodeProvisionRequestExt;
+
+    #[tokio::test]
+    async fn found() {
+        let request = super::node_provision_request("default");
+        let group = request.resolve_node_group_clone().unwrap();
+        assert_eq!(group.desired_count, 3);
+        assert_eq!(group.node_class, "test");
+
+        // Ensure the group is still defined.
+        let group = request.resolve_node_group_clone().unwrap();
+        assert_eq!(group.desired_count, 3);
+        assert_eq!(group.node_class, "test");
+    }
+
+    #[tokio::test]
+    #[should_panic]
+    async fn not_found() {
+        let request = super::node_provision_request("not-default");
+        let _ = request.resolve_node_group_clone().unwrap();
+    }
+}
+
+mod resolve_node_group_remove {
+    use super::super::NodeProvisionRequestExt;
+
+    #[tokio::test]
+    async fn found() {
+        let mut request = super::node_provision_request("default");
+        let group = request.resolve_node_group_remove().unwrap();
+        assert_eq!(group.desired_count, 3);
+        assert_eq!(group.node_class, "test");
+
+        // Ensure the group is gone.
+        let group = request.resolve_node_group_remove();
+        assert_eq!(group.is_err(), true);
+    }
+
+    #[tokio::test]
+    #[should_panic]
+    async fn not_found() {
+        let mut request = super::node_provision_request("not-default");
+        let _ = request.resolve_node_group_remove().unwrap();
+    }
+}

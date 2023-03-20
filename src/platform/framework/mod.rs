@@ -12,7 +12,10 @@ pub use self::context::DefaultContext;
 #[cfg(feature = "platform-framework_actix")]
 mod actix;
 #[cfg(feature = "platform-framework_actix")]
-pub use {self::actix::into_actix_service, self::actix::ActixServiceFactory};
+pub use {
+    self::actix::into_actix_service, self::actix::ActixServiceFactory,
+    self::actix::NodeProvisionRequestExt,
+};
 
 /// Interface of a Platform server.
 ///

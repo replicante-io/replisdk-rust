@@ -1,0 +1,9 @@
+---
+versions:
+  - version: '^1.2'
+    version.matched: yup
+    template:
+      target: version/selected/by/lookup
+      options:
+        a: b
+        c: 3.8

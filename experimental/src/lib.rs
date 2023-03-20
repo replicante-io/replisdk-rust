@@ -17,6 +17,7 @@
 //! The following features are available for the platforms area:
 //!
 //! * `platform-templates`: Enable tools to mange node templates in Replicante Platform servers.
+//! * `platform-templates_tera`: Enable Platform templates with Tera templating.
 #![deny(missing_docs)]
 
 #[cfg(feature = "platform-templates")]

@@ -3,6 +3,8 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 use serde::Serialize;
+use serde_json::Map;
+use serde_json::Value;
 
 /// Declarative definition of a cluster and its nodes.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -11,7 +13,7 @@ pub struct ClusterDefinition {
     ///
     /// These attributes can be used by the Platform to customise nodes in the cluster.
     #[serde(default)]
-    pub attributes: HashMap<String, serde_json::Value>,
+    pub attributes: Map<String, Value>,
 
     /// ID of the cluster to add the node to.
     pub cluster_id: String,
@@ -35,7 +37,7 @@ pub struct ClusterDefinitionNodeGroup {
     ///
     /// Extends `cluster.attributes` or override values with the same key.
     #[serde(default)]
-    pub attributes: HashMap<String, serde_json::Value>,
+    pub attributes: Map<String, Value>,
 
     /// Number of desired nodes for this group.
     pub desired_count: u32,
