@@ -57,17 +57,23 @@ async fn lookup_template() {
     )
     .await
     .unwrap();
-    let attributes = serde_json::json!({
-        "store.matched": 42,
-        "version.matched": "yup",
-    });
-    let version = semver::Version::parse("1.2.3").unwrap();
-    let template = templates
-        .lookup("postgres", &version, &attributes)
-        .await
-        .unwrap()
-        .unwrap();
-    assert_eq!(template.template, "version/selected/by/lookup");
+    let attributes = {
+        let mut attrs = serde_json::Map::new();
+        attrs.insert("store.matched".into(), 42.into());
+        attrs.insert("version.matched".into(), "yup".into());
+        attrs
+    };
+    let context = crate::platform::templates::TemplateContext {
+        attributes,
+        cluster_id: "WHO_CARES".into(),
+        store: "postgres".into(),
+        store_version: "1.2.3".into(),
+    };
+    let template = templates.lookup(&context).await.unwrap().unwrap();
+    assert_eq!(
+        template.template,
+        "src/platform/templates/lookup/fixtures/version/selected/by/lookup",
+    );
 }
 
 mod attributes_match {
@@ -75,7 +81,7 @@ mod attributes_match {
 
     #[test]
     fn no_attrs_no_matchers() {
-        let attributes = serde_json::json!({});
+        let attributes = serde_json::Map::new();
         let matchers = Default::default();
         let did_match = attributes_match(&attributes, &matchers);
         assert_eq!(did_match, true);
@@ -83,7 +89,7 @@ mod attributes_match {
 
     #[test]
     fn no_attrs_with_matchers() {
-        let attributes = serde_json::json!({});
+        let attributes = serde_json::Map::new();
         let matchers = {
             let mut matchers = std::collections::HashMap::default();
             matchers.insert("mode".into(), "none".into());
@@ -95,9 +101,11 @@ mod attributes_match {
 
     #[test]
     fn with_attrs_no_matchers() {
-        let attributes = serde_json::json!({
-            "mode": "none",
-        });
+        let attributes = {
+            let mut attrs = serde_json::Map::new();
+            attrs.insert("mode".into(), "none".into());
+            attrs
+        };
         let matchers = Default::default();
         let did_match = attributes_match(&attributes, &matchers);
         assert_eq!(did_match, true);
@@ -105,9 +113,11 @@ mod attributes_match {
 
     #[test]
     fn with_attrs_with_matchers_diff() {
-        let attributes = serde_json::json!({
-            "mode": "some",
-        });
+        let attributes = {
+            let mut attrs = serde_json::Map::new();
+            attrs.insert("mode".into(), "some".into());
+            attrs
+        };
         let matchers = {
             let mut matchers = std::collections::HashMap::default();
             matchers.insert("mode".into(), "none".into());
@@ -119,9 +129,11 @@ mod attributes_match {
 
     #[test]
     fn with_attrs_with_matchers_same() {
-        let attributes = serde_json::json!({
-            "mode": "none",
-        });
+        let attributes = {
+            let mut attrs = serde_json::Map::new();
+            attrs.insert("mode".into(), "none".into());
+            attrs
+        };
         let matchers = {
             let mut matchers = std::collections::HashMap::default();
             matchers.insert("mode".into(), "none".into());

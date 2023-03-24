@@ -16,10 +16,10 @@ impl actix_web::FromRequest for DefaultContext {
     type Future = futures::future::Ready<std::result::Result<Self, Self::Error>>;
 
     fn from_request(req: &actix_web::HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
-        let logger = match req.app_data::<actix_web::web::Data<Logger>>() {
-            Some(logger) => logger.as_ref().clone(),
-            None => todo!(),
-        };
+        let logger = req
+            .app_data::<actix_web::web::Data<Logger>>()
+            .map(|logger| logger.as_ref().clone())
+            .expect("no slog::Logger attached to actix-web App");
         futures::future::ready(Ok(DefaultContext { logger }))
     }
 }

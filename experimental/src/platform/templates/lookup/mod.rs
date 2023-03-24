@@ -11,11 +11,15 @@ mod manifests;
 #[cfg(test)]
 mod tests;
 
+use super::TemplateContext;
 use super::TemplateLoadOptions;
 use crate::platform::templates::TemplateFactory;
 
 /// Checks if the attributes match the matchers.
-fn attributes_match(attributes: &serde_json::Value, matchers: &HashMap<String, Value>) -> bool {
+fn attributes_match(
+    attributes: &serde_json::Map<String, serde_json::Value>,
+    matchers: &HashMap<String, Value>,
+) -> bool {
     for (name, value) in matchers {
         let is_match = attributes
             .get(name)
@@ -112,9 +116,15 @@ impl<T: TemplateFactory> TemplateLookup<T> {
                 let version = VersionReq::parse(&rule.version).with_context(|| {
                     LookupError::invalid_version_requirement(path.to_string_lossy())
                 })?;
+                let mut template: TemplateLoadOptions = rule.template.into();
+                let target = root.join(template.template);
+                template.template = target
+                    .to_str()
+                    .ok_or_else(|| LookupError::invalid_manifest_path(target.to_string_lossy()))?
+                    .to_string();
                 store.versions.push(VersionRule {
                     matchers: rule.matchers,
-                    template: rule.template.into(),
+                    template,
                     version,
                 });
             }
@@ -214,33 +224,31 @@ impl<T: TemplateFactory> TemplateLookup<T> {
     /// - If a rule has a property then the request attributes MUST have it also.
     /// - The value of a rule property MUST match the value of the corresponding attribute EXACTLY.
     /// - Any request attribute that is NOT also a rule property is ignored.
-    pub async fn lookup(
-        &self,
-        store: &str,
-        version: &semver::Version,
-        attributes: &serde_json::Value,
-    ) -> Option<Result<T::Template>> {
+    pub async fn lookup(&self, context: &TemplateContext) -> Result<Option<T::Template>> {
+        // Parse store version into a semver usable version.
+        let version = semver::Version::parse(&context.store_version)?;
+
         // Lookup a store rule.
-        let store_rule = self
-            .stores
-            .iter()
-            .find(|rule| rule.store == store && attributes_match(attributes, &rule.matchers));
+        let store_rule = self.stores.iter().find(|rule| {
+            rule.store == context.store && attributes_match(&context.attributes, &rule.matchers)
+        });
         let store_rule = match store_rule {
-            None => return None,
+            None => return Ok(None),
             Some(rule) => rule,
         };
 
         // Lookup a version rule.
         let version_rule = store_rule.versions.iter().find(|rule| {
-            rule.version.matches(version) && attributes_match(attributes, &rule.matchers)
+            rule.version.matches(&version) && attributes_match(&context.attributes, &rule.matchers)
         });
         let version_rule = match version_rule {
-            None => return None,
+            None => return Ok(None),
             Some(rule) => rule,
         };
 
         // Load the template based on the rule.
-        Some(self.factory.load(&version_rule.template).await)
+        let template = self.factory.load(&version_rule.template).await?;
+        Ok(Some(template))
     }
 }
 
@@ -251,12 +259,13 @@ impl<T: TemplateFactory> Extend<StoreRule> for TemplateLookup<T> {
 }
 
 /// Subset of [`serde_json::Value`] types allowed in matchers.
-#[derive(Debug, Deserialize, PartialEq)]
+#[derive(Debug, Default, Deserialize, PartialEq)]
 pub enum Value {
     /// Represents a JSON boolean.
     Bool(bool),
 
     /// Represents a JSON null value.
+    #[default]
     Null,
 
     /// Represents a JSON number, whether integer or floating point.
@@ -264,12 +273,6 @@ pub enum Value {
 
     /// Represents a JSON string.
     String(String),
-}
-
-impl Default for Value {
-    fn default() -> Self {
-        Value::Null
-    }
 }
 
 impl PartialEq<serde_json::Value> for Value {

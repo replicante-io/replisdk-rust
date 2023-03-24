@@ -1,9 +1,31 @@
 //! Utilities to manage store node templates in Replicante Platform servers.
 use anyhow::Result;
+use serde::Deserialize;
+use serde::Serialize;
+use serde_json::Map;
+use serde_json::Value;
 
 mod lookup;
 
 pub use self::lookup::TemplateLookup;
+
+/// Cluster node context to render templates with.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct TemplateContext {
+    /// Additional attributes attached to all nodes in the cluster.
+    ///
+    /// These attributes can be used by the template to customise nodes in the cluster.
+    pub attributes: Map<String, Value>,
+
+    /// ID of the cluster to add the node to.
+    pub cluster_id: String,
+
+    /// The store software to provision on the node.
+    pub store: String,
+
+    /// The version of the store software to provision on the node.
+    pub store_version: String,
+}
 
 /// Load templates from disk and prepares them for rendering.
 ///
