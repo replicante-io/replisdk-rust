@@ -1,7 +1,7 @@
 # Contributing to the Replicante Project
 
 First of all thank you for your time here!  
-We hope you choose to contribute to the Replicante Project as every little help counts.
+We hope you choose to contribute to the Replicante Project as all help counts.
 
 Any kind of contribution is welcomed, not just code.
 If you would like to help but you are not a coder, open a
@@ -152,25 +152,6 @@ This ensures the project overall remains consistent over time and easier to main
 
 Style guides on resources such as APIs also help ensure a consistent experience for users.
 
-### API
-
-Any API exposed by Replicante must follow this guidelines:
-
-* Replicante exposes an HTTP, JSON encoded, REST-like API:
-  * Each endpoint MUST use follow specific request and response schemas and is
-    NOT allowed to arbitrarily change the "shape" of requests/responses.
-  * Error responses MUST follow the same schema across the entire ecosystem.
-  * Error responses MUST include and `"error": true` attribute.
-* API Endpoints:
-  * Should always be introduced under the `/api/unstable` tree.
-  * They can change as needed until they become stable.
-  * Once stable endpoints are moved to the latest API version (`/api/v1`, `/api/v2`, ...).
-  * Once an endpoint is stable breaking changes are not allowed (adding attributes to a response
-    or optional parameters to requests does not count as a breaking change).
-  * If a breaking change is need a new version should be added under the unstable tree.
-  * When a new version tree is introduced all API endpoints MUST be made available under it.
-  * Older API versions can be removed with a breaking change in reasonable time.
-
 ### Rust
 
 The aim is to follow the [official rust guidelines](https://github.com/rust-dev-tools/fmt-rfcs/blob/master/guide/guide.md).
@@ -180,8 +161,6 @@ In particular code:
 * Must compile without errors or warnings.
 * Must pass clippy checks without errors.
 * Must pass a `rustfmt` check (`rustfmt` runs without needed to make changes).
-
-**NOTE**: sadly the project is not currently in a state where these guides are not followed.
 
 ## Attribution
 
