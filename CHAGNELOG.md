@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Error type to bridge anyhow and actix-web response rendering.
+- Platform API models for cluster discovery.
+- Platform deprovisioning models.
+- Platform implementation framework: actix-web service wrapper.
+- Platform implementation framework: platform trait definition and default context.
+- Platform models for Core API.
+- Platform provisioning models.
+- Runtime utility to manage async process and shutdown.
 
 ## 0.1.0 - 2022-10-28
 ### Added

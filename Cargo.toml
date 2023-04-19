@@ -1,10 +1,10 @@
 [package]
 name = "replisdk"
-version = "0.1.0"
+version = "0.1.1"
 description = "All in one SDK to develop Replicante ecosystem components in Rust"
 
 edition = "2021"
-rust-version = "1.60"
+rust-version = "1.63"
 
 homepage = "https://replicante.io"
 license = "MIT"
@@ -21,15 +21,40 @@ exclude = [
 [features]
 ## Platform features
 # Enable all platform related features.
-platform = ["platform-models"]
+platform = ["platform-framework", "platform-models"]
+# Enable Platform framework code.
+platform-framework = ["anyhow", "async-trait", "futures", "platform-models", "slog"]
+platform-framework_actix = ["actix-web", "platform-framework", "utils-actix_error"]
 # Enable definitions of platform data models.
-platform-models = []
+platform-models = ["serde", "serde_json"]
+
+## RepliCore features
+# Enable all Replicante Core related features.
+replicore = ["replicore-models"]
+# Enable definitions of replicore data models.
+replicore-models = ["serde", "serde_json"]
+
+## Runtime features.
+# Enable access to the ShutdownManager object and core tokio-based runtime utilities.
+runtime = ["anyhow", "futures", "slog", "thiserror", "tokio"]
+
+## Various utilities and common tasks.
+# Provides an `actix_web` error type that works with `anyhow::Error`.
+utils-actix_error = ["actix-web", "anyhow", "serde_json", "thiserror"]
 
 [dependencies]
-serde = { version = "^1.0", features = ["derive"] }
+actix-web = { version = "^4.3", optional = true }
+anyhow = { version = "^1.0", features = ["backtrace"], optional = true }
+async-trait = { version = "^0.1", optional = true }
+futures = { version = "^0.3", optional = true }
+serde = { version = "^1.0", optional = true, features = ["derive"] }
+serde_json = { version = "^1.0", optional = true }
+slog = { version = "^2.0", optional = true }
+thiserror = { version = "^1.0", optional = true }
+tokio = { version = "^1.0", optional = true, features = ["macros", "rt", "signal", "sync", "time"] }
 
 # Always depend on the proc macros crate matching our exact version!
-replisdk-proc = { version = "=0.1.0", path = "./proc"}
+replisdk-proc = { version = "=0.1.1", path = "./proc"}
 
 [package.metadata.docs.rs]
 all-features = true

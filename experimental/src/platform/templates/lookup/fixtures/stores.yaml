@@ -1,0 +1,8 @@
+---
+stores:
+  - store: test.simple.store
+    manifest: ./simple.store.yaml
+
+  - store: postgres
+    manifest: ./postgres.yaml
+    store.matched: 42

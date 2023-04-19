@@ -1,0 +1,5 @@
+---
+stores:
+  - store: postgres.2
+    manifest: ./postgres.yaml
+    extended: true
