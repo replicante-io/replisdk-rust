@@ -98,13 +98,7 @@ impl NodeProvisionRequestExt for NodeProvisionRequest {
             return Ok(node_group.clone());
         }
 
-        let error = anyhow::anyhow!("provision.node_group_id is not defined in cluster.nodes");
-        let response = serde_json::json!({
-            "defined_node_groups": self.cluster.nodes.keys().collect::<Vec<&String>>(),
-            "error_msg": error.to_string(),
-            "node_group_id": self.provision.node_group_id,
-        });
-        let error = crate::utils::actix::error::Error::from(error).use_strategy(response);
+        let error = no_group_found(self);
         anyhow::bail!(error);
     }
 
@@ -113,13 +107,19 @@ impl NodeProvisionRequestExt for NodeProvisionRequest {
             return Ok(node_group);
         }
 
-        let error = anyhow::anyhow!("provision.node_group_id is not defined in cluster.nodes");
-        let response = serde_json::json!({
-            "defined_node_groups": self.cluster.nodes.keys().collect::<Vec<&String>>(),
-            "error_msg": error.to_string(),
-            "node_group_id": self.provision.node_group_id,
-        });
-        let error = crate::utils::actix::error::Error::from(error).use_strategy(response);
+        let error = no_group_found(self);
         anyhow::bail!(error);
     }
+}
+
+/// Shared logic to return an error when the requested group is missing.
+#[inline]
+fn no_group_found(request: &NodeProvisionRequest) -> crate::utils::actix::error::Error {
+    let error = anyhow::anyhow!("provision.node_group_id is not defined in cluster.nodes");
+    let response = serde_json::json!({
+        "defined_node_groups": request.cluster.nodes.keys().collect::<Vec<&String>>(),
+        "error_msg": error.to_string(),
+        "node_group_id": request.provision.node_group_id,
+    });
+    crate::utils::actix::error::Error::from(error).use_strategy(response)
 }

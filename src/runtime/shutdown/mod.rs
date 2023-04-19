@@ -21,7 +21,7 @@ type WatchTaskOutput<T> = Option<<WatchTask<T> as Future>::Output>;
 pub const DEFAULT_SHUTDOWN_GRACE_TIMEOUT: u64 = 5 * 60;
 
 /// Exit code for abrupt exit caused by user signal during graceful shutdown.
-const FORCE_SHUTDOWN_EXIT_CODE: i32 = -42;
+const FORCE_SHUTDOWN_EXIT_CODE: i32 = 42;
 
 /// Errors waiting for exit or during the shutdown sequence.
 #[derive(Debug, thiserror::Error)]
@@ -78,6 +78,10 @@ pub enum ShutdownError {
 /// When the shutdown signal is received once the above mentioned shutdown sequence begins.
 /// If a second signal is sent to the process while shutdown is in progress the process is
 /// terminated abruptly [`std::process::exit`].
+///
+/// Process signals are only used as an exit condition if an exit signal value is defined with
+/// [`ShutdownManagerBuilder::watch_signal`] or
+/// [`ShutdownManagerBuilder::watch_signal_with_default`].
 ///
 /// ## Receiving the shutdown signal
 ///
