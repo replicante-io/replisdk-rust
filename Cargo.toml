@@ -19,6 +19,12 @@ exclude = [
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
+## (Replicante) Agent features
+# Enable all agent related features.
+agent = ["agent-models"]
+# Enable definitions of agent data models.
+agent-models = ["serde", "serde_json"]
+
 ## Platform features
 # Enable all platform related features.
 platform = ["platform-framework", "platform-models"]

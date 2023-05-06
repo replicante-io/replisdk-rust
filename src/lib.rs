@@ -28,6 +28,12 @@
 //!
 //! By default the SDK provides little to nothing and requires you to opt into what you need:
 //!
+//! ## Agents
+//!
+//! The following features are available for the agents area:
+//!
+//! * `agent-models`: Enable definitions of (Replicante) agent data models.
+//!
 //! ## Platforms
 //!
 //! The following features are available for the platforms area:
@@ -71,7 +77,10 @@
 //! [Rust Lang]: https://www.rust-lang.org/
 #![deny(missing_docs)]
 
-#[cfg(any(feature = "replicore-models"))]
+#[cfg(feature = "agent-models")]
+pub mod agent;
+
+#[cfg(feature = "replicore-models")]
 pub mod core;
 
 #[cfg(any(feature = "platform-framework", feature = "platform-models"))]
