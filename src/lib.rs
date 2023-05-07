@@ -52,10 +52,8 @@
 //!
 //! The runtime provides utilities to manage general features and needs of the process lifecycle.
 //!
-//! Unlike with other areas the `runtime` feature does not enable ALL available features but only
-//! process shutdown handling, with other features added optionally.
-//!
-//! * `runtime`: Enable tools to manage process shutdown on error or at user's request.
+//! * `runtime-shutdown`: Enable tools to manage process shutdown on error or at user's request.
+//! * `runtime-telemetry`: Enable utilities to initialise runtime telemetry of the process.
 //!
 //! ## utilities
 //!
@@ -86,7 +84,7 @@ pub mod core;
 #[cfg(any(feature = "platform-framework", feature = "platform-models"))]
 pub mod platform;
 
-#[cfg(feature = "runtime")]
+#[cfg(feature = "runtime-shutdown")]
 pub mod runtime;
 
 #[cfg(feature = "utils-actix_error")]
