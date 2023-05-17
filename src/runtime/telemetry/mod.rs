@@ -25,16 +25,41 @@
 //!
 //! Because [`slog-stdlog`] requires [`slog-scope`] to be configured, that library is also
 //! configured when `log` capturing is enabled.
+//!
+//! # OpenTelemetry
+//!
+//! [OpenTelemetry](https://opentelemetry.io/) is a framework for processes to generate
+//! telemetry data in an integrated and portable way.
+//!
+//! The project aim is to support integrated generation of logs, metrics and tracing data
+//! but at this time only tracing data is supported by these utilities.
+//!
+//! When enabled, the telemetry data can be exported in one of the following formats.
+//! The protocol, as well as its exporter options, can be configured at runtime.
+//!
+//! - Open Telemetry Protocol (OTLP): export data in the OpenTelemetry native protocol.
+//!
+//! ## Configuration
+//!
+//! By default OpenTelemetry is NOT enabled, which means all generated data is discarded.
+//! When enabled, telemetry data is exported to a locally running OpenTelemetry agent.
+//!
+//! Additional user configuration options can be provided with [`OTelConfig`]
+//! and applications can tune the OpenTelemetry integration with [`OTelOptions`].
+use anyhow::Result;
 use serde::Deserialize;
 use serde::Serialize;
 
 mod logging;
+mod opentel;
 
 pub use self::logging::LogBuilder;
 pub use self::logging::LogConfig;
 pub use self::logging::LogLevel;
 pub use self::logging::LogMode;
 pub use self::logging::LogOptions;
+pub use self::opentel::OTelConfig;
+pub use self::opentel::OTelOptions;
 
 /// Configured telemetry resources.
 ///
@@ -50,10 +75,13 @@ pub struct Telemetry {
 }
 
 /// Telemetry configuration options.
-#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct TelemetryConfig {
     /// Logging configuration for the process.
     pub logs: LogConfig,
+
+    /// OpenTelemetry configuration for the process.
+    pub otel: OTelConfig,
 }
 
 /// Programmatic telemetry options.
@@ -63,15 +91,19 @@ pub struct TelemetryConfig {
 pub struct TelemetryOptions {
     /// Logging programmatic options.
     pub logs: LogOptions,
+
+    /// OpenTelemetry programmatic options.
+    pub otel: OTelOptions,
 }
 
 /// Initialise telemetry for the process.
-pub async fn initialise(conf: TelemetryConfig, options: TelemetryOptions) -> Telemetry {
+pub async fn initialise(conf: TelemetryConfig, options: TelemetryOptions) -> Result<Telemetry> {
     let (logger, slog_scope_guard) = initialise_logger(conf.logs, options.logs);
-    Telemetry {
+    self::opentel::initialise(conf.otel, options.otel)?;
+    Ok(Telemetry {
         logger,
         slog_scope_guard,
-    }
+    })
 }
 
 /// Initialise a root logger based on the provided configuration.

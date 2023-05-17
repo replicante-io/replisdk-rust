@@ -4,7 +4,7 @@ version = "0.1.1"
 description = "All in one SDK to develop Replicante ecosystem components in Rust"
 
 edition = "2021"
-rust-version = "1.63"
+rust-version = "1.65"
 
 homepage = "https://replicante.io"
 license = "MIT"
@@ -47,6 +47,9 @@ runtime = ["runtime-shutdown"]
 runtime-shutdown = ["anyhow", "futures", "slog", "thiserror", "tokio"]
 # Enable telemetry initialisation utilities.
 runtime-telemetry = [
+  "anyhow",
+  "opentelemetry",
+  "opentelemetry-otlp",
   "serde",
   "slog",
   "slog-async",
@@ -66,6 +69,8 @@ actix-web = { version = "^4.3", optional = true }
 anyhow = { version = "^1.0", features = ["backtrace"], optional = true }
 async-trait = { version = "^0.1", optional = true }
 futures = { version = "^0.3", optional = true }
+opentelemetry = { version = "^0.19", optional = true, features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "^0.12", optional = true }
 serde = { version = "^1.0", optional = true, features = ["derive"] }
 serde_json = { version = "^1.0", optional = true }
 slog = { version = "^2.0", optional = true }
