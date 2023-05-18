@@ -216,6 +216,30 @@ impl Default for LogOptions {
     }
 }
 
+/// Initialise a root logger based on the provided configuration.
+pub fn initialise(
+    conf: LogConfig,
+    options: LogOptions,
+) -> (slog::Logger, Option<slog_scope::GlobalLoggerGuard>) {
+    // Build the root logger first.
+    let builder = match conf.mode {
+        LogMode::Json => LogBuilder::json(std::io::stdout(), conf.log_async),
+        LogMode::Terminal => LogBuilder::term(conf.log_async),
+    };
+    let logger = builder.level(conf.level).levels(conf.levels).finish();
+
+    // Initialise slog_scope and slog_stdlog libraries if `log` capture is desired.
+    let mut slog_scope_guard = None;
+    if options.capture_log_crate {
+        let guard = slog_scope::set_global_logger(logger.clone());
+        slog_stdlog::init().expect("capture of log crate initialisation failed");
+        slog_scope_guard = Some(guard);
+    }
+
+    // Return the root logger.
+    (logger, slog_scope_guard)
+}
+
 #[cfg(test)]
 mod tests {
     use super::LogBuilder;

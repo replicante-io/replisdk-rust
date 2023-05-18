@@ -4,7 +4,7 @@ version = "0.1.1"
 description = "All in one SDK to develop Replicante ecosystem components in Rust"
 
 edition = "2021"
-rust-version = "1.65"
+rust-version = "1.66"
 
 homepage = "https://replicante.io"
 license = "MIT"
@@ -50,6 +50,7 @@ runtime-telemetry = [
   "anyhow",
   "opentelemetry",
   "opentelemetry-otlp",
+  "sentry",
   "serde",
   "slog",
   "slog-async",
@@ -58,6 +59,7 @@ runtime-telemetry = [
   "slog-scope",
   "slog-stdlog",
   "slog-term",
+  "thiserror",
 ]
 
 ## Various utilities and common tasks.
@@ -71,6 +73,7 @@ async-trait = { version = "^0.1", optional = true }
 futures = { version = "^0.3", optional = true }
 opentelemetry = { version = "^0.19", optional = true, features = ["rt-tokio"] }
 opentelemetry-otlp = { version = "^0.12", optional = true }
+sentry = { version = "^0.31", optional = true }
 serde = { version = "^1.0", optional = true, features = ["derive"] }
 serde_json = { version = "^1.0", optional = true }
 slog = { version = "^2.0", optional = true }

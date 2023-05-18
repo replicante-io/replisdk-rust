@@ -46,12 +46,38 @@
 //!
 //! Additional user configuration options can be provided with [`OTelConfig`]
 //! and applications can tune the OpenTelemetry integration with [`OTelOptions`].
+//!
+//! # Sentry
+//!
+//! [Sentry](https://sentry.io/) is an error and events reporting solution to collect
+//! data from applications and understand when and where issues occur faster.
+//!
+//! The Sentry client is not automatically enabled and users must configure it.
+//! Enabling sentry is a two steps process:
+//!
+//! 1. Enable process integration by setting [`SentryConfig::enabled`] to `true`.
+//! 2. Configure a Sentry DSN (Data Source Name) for the client to emit events.
+//!
+//! ## Configuration
+//!
+//! User specified configuration options are set in the [`SentryConfig`] struct
+//! similarly to the other telemetry frameworks.
+//!
+//! Unlike other cases Sentry has some required options that the application MUST
+//! provide during initialisation. These are set in the [`SentryOptions`] struct.
+//!
+//! - [`SentryOptions::release`]: the identifier of the current application and version.
+//!   You can use the [`sentry::release_name`] macro for this.
+//!   You can create a `SentryOptions` struct from a release with [`SentryOptions::for_release`].
+//! - [`SentryOptions::in_app_include`]: a list of module prefixes for Sentry to consider part
+//!   of the instrumented applications.
 use anyhow::Result;
 use serde::Deserialize;
 use serde::Serialize;
 
 mod logging;
 mod opentel;
+mod repli_sentry;
 
 pub use self::logging::LogBuilder;
 pub use self::logging::LogConfig;
@@ -60,6 +86,9 @@ pub use self::logging::LogMode;
 pub use self::logging::LogOptions;
 pub use self::opentel::OTelConfig;
 pub use self::opentel::OTelOptions;
+pub use self::repli_sentry::SentryConfig;
+pub use self::repli_sentry::SentryError;
+pub use self::repli_sentry::SentryOptions;
 
 /// Configured telemetry resources.
 ///
@@ -70,6 +99,9 @@ pub struct Telemetry {
     pub logger: slog::Logger,
 
     // Initialisation guards for global scopes.
+    #[allow(dead_code)]
+    sentry: Option<sentry::ClientInitGuard>,
+
     #[allow(dead_code)]
     slog_scope_guard: Option<slog_scope::GlobalLoggerGuard>,
 }
@@ -82,6 +114,9 @@ pub struct TelemetryConfig {
 
     /// OpenTelemetry configuration for the process.
     pub otel: OTelConfig,
+
+    /// Sentry configuration for the process.
+    pub sentry: SentryConfig,
 }
 
 /// Programmatic telemetry options.
@@ -94,38 +129,19 @@ pub struct TelemetryOptions {
 
     /// OpenTelemetry programmatic options.
     pub otel: OTelOptions,
+
+    /// Sentry programmatic options.
+    pub sentry: SentryOptions,
 }
 
 /// Initialise telemetry for the process.
 pub async fn initialise(conf: TelemetryConfig, options: TelemetryOptions) -> Result<Telemetry> {
-    let (logger, slog_scope_guard) = initialise_logger(conf.logs, options.logs);
+    let (logger, slog_scope_guard) = self::logging::initialise(conf.logs, options.logs);
     self::opentel::initialise(conf.otel, options.otel)?;
+    let sentry = self::repli_sentry::initialise(conf.sentry, options.sentry)?;
     Ok(Telemetry {
         logger,
+        sentry,
         slog_scope_guard,
     })
-}
-
-/// Initialise a root logger based on the provided configuration.
-pub fn initialise_logger(
-    conf: LogConfig,
-    options: LogOptions,
-) -> (slog::Logger, Option<slog_scope::GlobalLoggerGuard>) {
-    // Build the root logger first.
-    let builder = match conf.mode {
-        LogMode::Json => LogBuilder::json(std::io::stdout(), conf.log_async),
-        LogMode::Terminal => LogBuilder::term(conf.log_async),
-    };
-    let logger = builder.level(conf.level).levels(conf.levels).finish();
-
-    // Initialise slog_scope and slog_stdlog libraries if `log` capture is desired.
-    let mut slog_scope_guard = None;
-    if options.capture_log_crate {
-        let guard = slog_scope::set_global_logger(logger.clone());
-        slog_stdlog::init().expect("capture of log crate initialisation failed");
-        slog_scope_guard = Some(guard);
-    }
-
-    // Return the root logger.
-    (logger, slog_scope_guard)
 }

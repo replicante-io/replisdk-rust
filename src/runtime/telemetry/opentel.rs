@@ -1,4 +1,4 @@
-//! OpenTelemetry related logic.
+//! OpenTelemetry initialisation related logic.
 use anyhow::Result;
 use opentelemetry::sdk::trace::Sampler as SdkSampler;
 use opentelemetry_otlp::WithExportConfig;
