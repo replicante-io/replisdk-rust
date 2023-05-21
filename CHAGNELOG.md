@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Platform implementation framework: platform trait definition and default context.
 - Platform models for Core API.
 - Platform provisioning models.
+- Prometheus metrics collection and export utilities for the `actix-web` framework.
 - Runtime telemetry initialisation utilities.
 - Runtime utility to manage async process and shutdown.
 - Store Agent models.
