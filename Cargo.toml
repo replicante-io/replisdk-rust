@@ -64,6 +64,7 @@ runtime-actix_builder = [
   "thiserror",
 
   "runtime-telemetry",
+  "runtime-tokio_conf",
   "utils-actix_metrics",
 ]
 # Enable ShutdownManager and core tokio-based runtime utilities.
@@ -87,6 +88,8 @@ runtime-telemetry = [
   "slog-term",
   "thiserror",
 ]
+# Enable tokio runtime configuration utilities.
+runtime-tokio_conf = ["tokio"]
 
 ## Various utilities and common tasks.
 # Provides an `actix_web` error type that works with `anyhow::Error`.

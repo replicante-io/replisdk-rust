@@ -57,6 +57,7 @@
 //! * `runtime-shutdown`: Enable tools to manage process shutdown on error or at user's request.
 //! * `runtime-shutdown_acitx`: Enable process shutdown extension to watch for `actix_web` servers.
 //! * `runtime-telemetry`: Enable utilities to initialise runtime telemetry of the process.
+//! * `runtime-tokio_conf`: Enable tokio runtime configuration utilities.
 //!
 //! ## utilities
 //!
@@ -92,6 +93,7 @@ pub mod platform;
     feature = "runtime-actix_builder",
     feature = "runtime-shutdown",
     feature = "runtime-telemetry",
+    feature = "runtime-tokio_conf",
 ))]
 pub mod runtime;
 

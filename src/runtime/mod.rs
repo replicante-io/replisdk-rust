@@ -7,3 +7,6 @@ pub mod shutdown;
 
 #[cfg(feature = "runtime-telemetry")]
 pub mod telemetry;
+
+#[cfg(feature = "runtime-tokio_conf")]
+pub mod tokio_conf;

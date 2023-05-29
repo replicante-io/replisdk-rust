@@ -5,6 +5,7 @@ use serde::Serialize;
 
 use crate::runtime::actix_web::ServerConfig;
 use crate::runtime::telemetry::TelemetryConfig;
+use crate::runtime::tokio_conf::TokioRuntimeConf;
 
 /// Container for the complete agent configuration.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -20,6 +21,10 @@ where
     #[serde(default)]
     pub http: ServerConfig,
 
+    /// Tokio Runtime configuration.
+    #[serde(default)]
+    pub runtime: TokioRuntimeConf,
+
     /// Telemetry configuration for the agent.
     #[serde(default)]
     pub telemetry: TelemetryConfig,
@@ -34,6 +39,7 @@ where
             custom: Default::default(),
             http: Default::default(),
             telemetry: Default::default(),
+            runtime: Default::default(),
         }
     }
 }
