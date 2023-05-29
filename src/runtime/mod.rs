@@ -1,12 +1,9 @@
 //! Utilities to manage general features and needs of the process lifecycle.
+#[cfg(feature = "runtime-actix_builder")]
+pub mod actix_web;
+
 #[cfg(feature = "runtime-shutdown")]
-mod shutdown;
+pub mod shutdown;
 
 #[cfg(feature = "runtime-telemetry")]
 pub mod telemetry;
-
-#[cfg(feature = "runtime-shutdown")]
-pub use {
-    self::shutdown::ShutdownManager, self::shutdown::ShutdownManagerBuilder,
-    self::shutdown::DEFAULT_SHUTDOWN_GRACE_TIMEOUT,
-};

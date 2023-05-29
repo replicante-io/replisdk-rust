@@ -1,3 +1,4 @@
+//! Tools to manage process shutdown on error or at user's request.
 use std::future::Future;
 use std::time::Duration;
 
@@ -26,15 +27,24 @@ const FORCE_SHUTDOWN_EXIT_CODE: i32 = 42;
 /// Errors waiting for exit or during the shutdown sequence.
 #[derive(Debug, thiserror::Error)]
 pub enum ShutdownError {
+    #[cfg(feature = "runtime-shutdown_actix")]
+    /// Actix-web HttpServer stopped with an error.
+    #[error("actix-web HttpServer stopped with an error")]
+    ActixServer,
+
+    /// Unable to wait for exit signal from the OS.
     #[error("unable to wait for exit signal from the OS")]
     SignalError,
 
+    /// Returned when a tokio task was cancelled.
     #[error("tokio task was cancelled")]
     TokioTaskCancelled,
 
+    /// Returned when a tokio task failed to join.
     #[error("tokio task failed to join")]
     TokioTaskError,
 
+    /// Returned when a tokio task exited with a panic.
     #[error("tokio task exited with a panic")]
     TokioTaskPanic,
 }
@@ -365,6 +375,29 @@ impl<T> ShutdownManagerBuilder<T> {
     pub fn watch_tokio(mut self, task: JoinHandle<Result<T>>) -> ShutdownManagerBuilder<T> {
         self.tasks.push(task);
         self
+    }
+}
+
+#[cfg(feature = "runtime-shutdown_actix")]
+impl<T: Send + 'static> ShutdownManagerBuilder<T> {
+    /// Watch [`actix_web::dev::Server`] for exit, returning the given value.
+    pub fn watch_actix(
+        self,
+        server: actix_web::dev::Server,
+        value: T,
+    ) -> ShutdownManagerBuilder<T> {
+        let notification = self.shutdown_notification();
+        self.watch_tokio(tokio::spawn(async {
+            let handle = server.handle();
+            tokio::select! {
+                reason = server => if let Err(error) = reason {
+                    let error = anyhow::anyhow!(error).context(ShutdownError::ActixServer);
+                    anyhow::bail!(error);
+                },
+                _ = notification => handle.stop(true).await,
+            };
+            Ok(value)
+        }))
     }
 }
 

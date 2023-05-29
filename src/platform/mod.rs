@@ -1,4 +1,4 @@
-//! Abstraction layer for Replicante ecosystem to integrate with (infrastructure) Platforms.
+//! Abstraction layer for the Replicante ecosystem to integrate with (infrastructure) Platforms.
 //!
 //! # Platform integrations
 //!

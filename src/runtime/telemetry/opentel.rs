@@ -20,7 +20,8 @@ pub struct OTelConfig {
     #[serde(default)]
     pub sampling: Sampler,
 
-    /// Timeout in seconds when communicating with the OpenTelemetry collector.
+    /// Timeout in seconds when communicating with the OpenTelemetry agent.
+    #[serde(default)]
     pub timeout_sec: Option<u64>,
 }
 
@@ -79,12 +80,15 @@ impl From<Sampler> for SdkSampler {
 pub enum SamplerMode {
     /// Always sample new traces.
     #[default]
+    #[serde(alias = "ALWAYS", alias = "always")]
     Always,
 
     /// Never sample new traces.
+    #[serde(alias = "NEVER", alias = "NEVER")]
     Never,
 
     /// Sample a portion of traces based on the configured ratio.
+    #[serde(alias = "RATIO", alias = "RATIO")]
     Ratio(f64),
 }
 

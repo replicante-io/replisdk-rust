@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- Agent implementation framework: reusable process initialisation logic.
 - Error type to bridge anyhow and `actix-web` response rendering.
 - Platform API models for cluster discovery.
 - Platform deprovisioning models.
@@ -15,6 +16,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Platform models for Core API.
 - Platform provisioning models.
 - Prometheus metrics collection and export utilities for the `actix-web` framework.
+- Runtime actix-web server configuration.
 - Runtime telemetry initialisation utilities.
 - Runtime utility to manage async process and shutdown.
 - Store Agent models.

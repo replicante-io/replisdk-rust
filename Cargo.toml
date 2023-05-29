@@ -21,13 +21,23 @@ exclude = [
 [features]
 ## (Replicante) Agent features
 # Enable all agent related features.
-agent = ["agent-models"]
+agent = ["agent-framework", "agent-models"]
+# Enable Agent framework code.
+agent-framework = [
+  "actix-web",
+  "anyhow",
+  "runtime-actix_builder",
+  "runtime-shutdown",
+  "runtime-shutdown_actix",
+  "runtime-telemetry",
+  "tokio",
+]
 # Enable definitions of agent data models.
 agent-models = ["serde", "serde_json"]
 
 ## Platform features
 # Enable all platform related features.
-platform = ["platform-framework", "platform-models"]
+platform = ["platform-framework", "platform-framework_actix", "platform-models"]
 # Enable Platform framework code.
 platform-framework = ["anyhow", "async-trait", "futures", "platform-models", "slog"]
 platform-framework_actix = ["actix-web", "platform-framework", "utils-actix_error"]
@@ -42,9 +52,24 @@ replicore-models = ["serde", "serde_json"]
 
 ## Runtime features.
 # Enable all available runtime features.
-runtime = ["runtime-shutdown"]
-# Enable access to the ShutdownManager object and core tokio-based runtime utilities.
+runtime = ["runtime-actix_builder", "runtime-shutdown", "runtime-telemetry"]
+# Enable Actix Web server runtime configuration utilities.
+runtime-actix_builder = [
+  "actix-http",
+  "actix-service",
+  "actix-web",
+  "anyhow",
+  "serde",
+  "slog",
+  "thiserror",
+
+  "runtime-telemetry",
+  "utils-actix_metrics",
+]
+# Enable ShutdownManager and core tokio-based runtime utilities.
 runtime-shutdown = ["anyhow", "futures", "slog", "thiserror", "tokio"]
+# Enable ShutdownManager extension to watch for `actix_web` servers.
+runtime-shutdown_actix = ["actix-web"]
 # Enable telemetry initialisation utilities.
 runtime-telemetry = [
   "anyhow",
@@ -70,6 +95,8 @@ utils-actix_error = ["actix-web", "anyhow", "serde_json", "thiserror"]
 utils-actix_metrics = ["actix-web", "futures-util", "prometheus", "utils-actix_error"]
 
 [dependencies]
+actix-http = { version = "^3.0", optional = true }
+actix-service = { version = "^2.0", optional = true }
 actix-web = { version = "^4.3", optional = true }
 anyhow = { version = "^1.0", features = ["backtrace"], optional = true }
 async-trait = { version = "^0.1", optional = true }

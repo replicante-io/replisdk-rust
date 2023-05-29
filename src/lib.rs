@@ -32,6 +32,7 @@
 //!
 //! The following features are available for the agents area:
 //!
+//! * `agent-framework`: Enable tools to implement Replicante Agents.
 //! * `agent-models`: Enable definitions of (Replicante) agent data models.
 //!
 //! ## Platforms
@@ -52,7 +53,9 @@
 //!
 //! The runtime provides utilities to manage general features and needs of the process lifecycle.
 //!
+//! * `runtime-actix_builder`: Enable Actix Web server runtime configuration utilities.
 //! * `runtime-shutdown`: Enable tools to manage process shutdown on error or at user's request.
+//! * `runtime-shutdown_acitx`: Enable process shutdown extension to watch for `actix_web` servers.
 //! * `runtime-telemetry`: Enable utilities to initialise runtime telemetry of the process.
 //!
 //! ## utilities
@@ -60,6 +63,7 @@
 //! A configurable collection of various utilities and code for common tasks.
 //!
 //! * `utils-actix_error`: An `actix_web` error type that works with `anyhow::Error`.
+//! * `utils-actix_metrics`: Collect metrics about processed requests and an exporter all metrics.
 //!
 //! # The experimental crate
 //!
@@ -75,7 +79,7 @@
 //! [Rust Lang]: https://www.rust-lang.org/
 #![deny(missing_docs)]
 
-#[cfg(feature = "agent-models")]
+#[cfg(any(feature = "agent-framework", feature = "agent-models"))]
 pub mod agent;
 
 #[cfg(feature = "replicore-models")]
@@ -84,7 +88,11 @@ pub mod core;
 #[cfg(any(feature = "platform-framework", feature = "platform-models"))]
 pub mod platform;
 
-#[cfg(feature = "runtime-shutdown")]
+#[cfg(any(
+    feature = "runtime-actix_builder",
+    feature = "runtime-shutdown",
+    feature = "runtime-telemetry",
+))]
 pub mod runtime;
 
 #[cfg(feature = "utils-actix_error")]

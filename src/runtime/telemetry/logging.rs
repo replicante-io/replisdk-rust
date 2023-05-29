@@ -161,15 +161,16 @@ pub enum LogLevel {
     Error,
 
     /// Emit warning or more sever log events.
-    #[default]
     #[serde(alias = "WARNING", alias = "warning")]
     Warning,
 
     /// Emit information or more sever log events.
+    #[cfg_attr(not(debug_assertions), default)]
     #[serde(alias = "INFO", alias = "info")]
     Info,
 
     /// Emit debug or more sever log events.
+    #[cfg_attr(debug_assertions, default)]
     #[serde(alias = "DEBUG", alias = "debug")]
     Debug,
 
@@ -196,9 +197,11 @@ impl From<LogLevel> for slog::FilterLevel {
 pub enum LogMode {
     /// Format logs as a stream of JSON encoded lines to standard out.
     #[default]
+    #[serde(alias = "JSON", alias = "json")]
     Json,
 
-    /// Display logs onto a terminal, with option colour support.
+    /// Display logs onto a terminal, with optional colour support.
+    #[serde(alias = "TERMINAL", alias = "terminal")]
     Terminal,
 }
 

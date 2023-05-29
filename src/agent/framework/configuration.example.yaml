@@ -1,0 +1,96 @@
+---
+# <Agent specific options are part of the root object>
+
+# Agent HTTP Server interface configuration.
+http:
+  # Sets the maximum number of pending connections.
+  backlog: ~
+
+  # Resolves socket address(es) and binds server to created listener(s).
+  bind: "localhost:6000"
+
+  # Format of server access logs.
+  log_format: ~
+
+# Telemetry configuration for the process.
+telemetry:
+  # Logging configuration for the process.
+  logs:
+    # Emit log events asynchronously.
+    #
+    # Asynchronous logging can improve performance for but can result
+    # in some events loss if the process exists abruptly.
+    async: true
+
+    # Only emit log event with this level or grater.
+    #
+    # Valid options are: CRITICAL, ERROR, WARNING, INFO, DEBUG, TRACE
+    # or their lower case versions.
+    # Depending on how applications are compiled DEBUG and TRACE logs may
+    # not be emitted regardless of what this is set to.
+    level: info
+
+    # Set log levels that apply to specific modules only.
+    #
+    # Valid options are the same as the level field.
+    levels:
+      # For example you can disable request logs while preserving .
+      "actix_web::middleware::logger": warning
+
+    # Select how logs are emitted by the process.
+    #
+    # Valid options are:
+    # - JSON: Format logs as a stream of JSON encoded lines to standard out.
+    # - TERMINAL: Display logs onto a terminal, with optional colour support.
+    mode: json
+
+  # OpenTelemetry configuration for the process.
+  otel:
+    # Enable export of data using the OpenTelemetry protocol.
+    enabled: true
+
+    # GRPC endpoint of the OpenTelemetry agent to send data to.
+    endpoint: ~
+
+    # Trace sampling configuration.
+    sampling:
+      # Follow the sampling decision of the parent span, if any exists.
+      follow_parent: true
+
+      # The sampling rule for traces without a parent span.
+      #
+      # Valid options are: ALWAYS, NEVER, RATIO
+      # or their lower case versions.
+      #
+      # For RATIO mode specify the ratio between 0.0 and 1.0 using an object: {ration: 0.6}.
+      mode: ALWAYS
+
+    # Timeout in seconds when communicating with the OpenTelemetry agent.
+    timeout_sec: ~
+
+  # Prometheus metrics configuration.
+  prom_metrics:
+    # Additional labels to attach to all metrics.
+    labels: {}
+
+    # Enable collection of process-level metrics (linux only).
+    process_metrics: true
+
+  # Sentry error reporting configuration.
+  sentry:
+    # Sentry DSN (Data Source Name) to send events to.
+    #
+    # If not set, the environment variable SENTRY_DSN is used.
+    dsn: ~
+
+    # Enable sentry integration.
+    #
+    # Once this option is set to true a DSN must also be specified
+    # either above or in SENTRY_DSN for the integration to work.
+    enabled: false
+
+    # The ratio of generated events that are submitted to Sentry (between 0.0 and 1.0).
+    sample_ratio: 1.0
+
+    # Maximum delay in seconds to process shutdown to flush pending events to Sentry.
+    shutdown_timeout: 2
