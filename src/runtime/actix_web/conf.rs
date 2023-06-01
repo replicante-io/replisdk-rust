@@ -49,7 +49,7 @@ pub struct ServerConfig {
 
 impl ServerConfig {
     fn default_bind() -> String {
-        "localhost:6000".into()
+        "localhost:8000".into()
     }
 }
 

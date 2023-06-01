@@ -8,6 +8,7 @@ use actix_web::App;
 use actix_web::HttpServer;
 use anyhow::Result;
 use prometheus::Registry;
+use slog::Logger;
 
 use crate::utils::actix::metrics::MetricsCollector;
 use crate::utils::actix::metrics::MetricsExporter;
@@ -65,14 +66,14 @@ pub struct OpinionatedBuilder {
 }
 
 impl OpinionatedBuilder {
-    /// Complete the build and returns a running server.
+    /// Complete configuration and return a running server.
     ///
     /// # Panics
     ///
     /// This method panics if the builder is not given all required parameters:
     ///
     /// - A prefix for metrics names MUST be provided along side a [`Registry`].
-    pub fn build(self) -> Result<Server> {
+    pub fn run(self, logger: Option<&Logger>) -> Result<Server> {
         // Validate the builder.
         let metrics_prefix = self
             .metrics_prefix
@@ -107,6 +108,9 @@ impl OpinionatedBuilder {
                 .route(actix_web::web::get().to(export.clone()));
             app.service(metrics_res).wrap(metrics.clone())
         });
+        if let Some(logger) = logger {
+            slog::info!(logger, "Starting HTTP Server bound at {}", &self.conf.bind);
+        }
         let server = self.conf.apply(server)?;
         Ok(server.run())
     }

@@ -26,11 +26,16 @@ agent = ["agent-framework", "agent-models"]
 agent-framework = [
   "actix-web",
   "anyhow",
+  "async-trait",
+  "slog",
+  "tokio",
+
+  "agent-models",
   "runtime-actix_builder",
   "runtime-shutdown",
   "runtime-shutdown_actix",
   "runtime-telemetry",
-  "tokio",
+  "utils-actix_error",
 ]
 # Enable definitions of agent data models.
 agent-models = ["serde", "serde_json"]

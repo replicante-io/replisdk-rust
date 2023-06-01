@@ -58,7 +58,7 @@
 //!     .configure(conf)
 //!     .options(...)
 //!     .telemetry_options(...)
-//!     .agent_info(info::AgentInfo::new(...))
+//!     .node_info(info::NodeInfo::factory(...))
 //!     .watch_task(background::custom_worker_task(...))
 //!     .watch_task(background::store_monitor_task(...))
 //!     .register_action(actions::custom(...))
@@ -69,119 +69,43 @@
 //!     .run()
 //!     .await
 //! ```
-use anyhow::Result;
-use serde::de::DeserializeOwned;
-use serde::Serialize;
+use std::future::Ready;
 
-use crate::runtime::actix_web::AppConfigurer;
-use crate::runtime::shutdown::ShutdownManager;
-use crate::runtime::shutdown::ShutdownManagerBuilder;
-use crate::runtime::telemetry::initialise as telemetry_init;
-use crate::runtime::telemetry::TelemetryOptions;
+use actix_web::web::Data;
+use actix_web::Error;
+use actix_web::FromRequest;
+use actix_web::HttpRequest;
+use slog::Logger;
 
 mod conf;
+mod info;
+mod proc;
 
 pub use self::conf::AgentConf;
 pub use self::conf::AgentOptions;
+pub use self::info::NodeInfo;
+pub use self::proc::Agent;
+pub use self::proc::NodeInfoFactory;
+pub use self::proc::NodeInfoFactoryArgs;
 
-/// Configure a process to run a Replicante Agent.
-pub struct Agent<C>
-where
-    C: Clone + std::fmt::Debug + PartialEq + Serialize + DeserializeOwned,
-{
-    conf: Option<AgentConf<C>>,
-    options: Option<AgentOptions>,
-    shutdown: ShutdownManagerBuilder<()>,
-    telemetry_options: Option<TelemetryOptions>,
+/// Default additional context for [`NodeInfo`] implementations.
+///
+/// When using custom contexts you can still reuse the default logic by embedding this
+/// struct as a field to your custom context type.
+pub struct DefaultContext {
+    /// Contextual logger to be used by the operation.
+    pub logger: Logger,
 }
 
-impl<C> Agent<C>
-where
-    C: Clone + std::fmt::Debug + PartialEq + Serialize + DeserializeOwned,
-{
-    /// Build an agent while reusing shared logic from the Replicante SDK.
-    pub fn build() -> Self {
-        let shutdown = ShutdownManager::builder().watch_signal_with_default();
-        Agent {
-            conf: None,
-            options: None,
-            shutdown,
-            telemetry_options: None,
-        }
-    }
+impl FromRequest for DefaultContext {
+    type Error = Error;
+    type Future = Ready<std::result::Result<Self, Self::Error>>;
 
-    /// Set the agent configuration to use.
-    pub fn configure(mut self, conf: AgentConf<C>) -> Self {
-        self.conf = Some(conf);
-        self
-    }
-
-    /// Set the agent programmatic options.
-    pub fn options(mut self, options: AgentOptions) -> Self {
-        self.options = Some(options);
-        self
-    }
-
-    /// Finalise agent setup and run it.
-    ///
-    /// # Panics
-    ///
-    /// This method panics if required elements are not defined:
-    ///
-    /// - The agent MUST be configured with a call to [`Agent::configure`].
-    /// - The agent MUST be given [`AgentOptions`] with a call to [`Agent::options`].
-    /// - The agent MUST be given [`TelemetryOptions`] with a call to [`Agent::telemetry_options`].
-    pub async fn run(self) -> Result<()> {
-        // Validate the agent build.
-        let conf = self
-            .conf
-            .expect("must configure(...) the agent before it can run");
-        let options = self
-            .options
-            .expect("must set options(...) for the agent before it can run");
-        let telemetry_options = self
-            .telemetry_options
-            .expect("must provide telemetry_options(...) to the agent before it can run");
-
-        // Initialise the process.
-        let telemetry = telemetry_init(conf.telemetry, telemetry_options).await?;
-        let shutdown = self
-            .shutdown
-            .logger(telemetry.logger.clone())
-            .watch_signal_with_default();
-
-        // Configure and start the HTTP Server.
-        let app = AppConfigurer::default();
-        let server = conf
-            .http
-            .opinionated(app)
-            .metrics(options.requests_metrics_prefix, telemetry.metrics.clone())
-            .build()?;
-        let shutdown = shutdown.watch_actix(server, ());
-
-        // Complete shutdown setup and run the agent until an exit condition.
-        let exit = shutdown.build();
-        exit.wait().await
-    }
-
-    /// Set the [`TelemetryOptions`] for the agent process to use.
-    pub fn telemetry_options(mut self, options: TelemetryOptions) -> Self {
-        self.telemetry_options = Some(options);
-        self
+    fn from_request(req: &HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
+        let logger = req
+            .app_data::<Data<Logger>>()
+            .map(|logger| logger.as_ref().clone())
+            .expect("no slog::Logger attached to actix-web App");
+        std::future::ready(Ok(DefaultContext { logger }))
     }
 }
-
-/* *** Agent process builder ***
-let (tokio, conf) = config::load()?;
-let runtime = tokio::Runtime::from_conf(tokio)?;
-runtime.block_on(async || {
-    Agent::build()...
-})
-
-Once agent is all done can look at a proc macro to write?
-
-#[replisdk::agent::main(conf::load)]
-async fn main(conf: AgentConf<C>) -> Result<E> {
-    Agent::build()...
-}
-*/

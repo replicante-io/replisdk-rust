@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- Agent implementation framework: node information trait.
 - Agent implementation framework: reusable process initialisation logic.
 - Error type to bridge anyhow and `actix-web` response rendering.
 - Platform API models for cluster discovery.
