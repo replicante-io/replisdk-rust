@@ -12,6 +12,12 @@ http:
   # Format of server access logs.
   log_format: ~
 
+# ID of the node as defined by the platform the node runs on.
+#
+# For example if the node is running on a cloud instance this ID would be
+# the cloud instance ID.
+node_id: ~
+
 # Configuration of the tokio runtime for the process.
 #
 # These options configure the handling of synchronous and asynchronous tasks.

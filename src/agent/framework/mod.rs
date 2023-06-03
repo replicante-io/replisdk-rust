@@ -79,11 +79,14 @@ use slog::Logger;
 
 mod conf;
 mod info;
+mod node_id;
 mod proc;
 
 pub use self::conf::AgentConf;
 pub use self::conf::AgentOptions;
 pub use self::info::NodeInfo;
+pub use self::node_id::detect_node_id;
+pub use self::node_id::NodeIdDetectError;
 pub use self::proc::Agent;
 pub use self::proc::NodeInfoFactory;
 pub use self::proc::NodeInfoFactoryArgs;

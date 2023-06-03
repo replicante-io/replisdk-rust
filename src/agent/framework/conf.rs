@@ -21,6 +21,13 @@ where
     #[serde(default)]
     pub http: ServerConfig,
 
+    /// ID of the node as defined by the platform the node runs on.
+    ///
+    /// For example if the node is running on a cloud instance this ID would be
+    /// the cloud instance ID.
+    #[serde(default)]
+    pub node_id: Option<String>,
+
     /// Tokio Runtime configuration.
     #[serde(default)]
     pub runtime: TokioRuntimeConf,
@@ -38,6 +45,7 @@ where
         AgentConf {
             custom: Default::default(),
             http: Default::default(),
+            node_id: None,
             telemetry: Default::default(),
             runtime: Default::default(),
         }

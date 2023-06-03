@@ -134,7 +134,7 @@ where
         slog::info!(telemetry.logger, "Process telemetry initialised");
 
         // Initialise info gathering.
-        slog::debug!(telemetry.logger, "Initialising node information gatherer.");
+        slog::debug!(telemetry.logger, "Initialising node information gatherer");
         let node_info = node_info
             .factory(NodeInfoFactoryArgs {
                 conf: &conf,
