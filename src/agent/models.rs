@@ -111,5 +111,6 @@ pub struct StoreVersion {
     pub number: String,
 
     /// Store specific additional version information.
+    #[serde(default)]
     pub extra: Option<String>,
 }

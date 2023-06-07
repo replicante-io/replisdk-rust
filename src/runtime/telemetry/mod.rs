@@ -126,7 +126,7 @@ pub struct Telemetry {
     sentry: Option<sentry::ClientInitGuard>,
 
     #[allow(dead_code)]
-    slog_scope_guard: Option<slog_scope::GlobalLoggerGuard>,
+    slog_scope_guard: self::logging::StdLogSafeGuard,
 }
 
 /// Telemetry configuration options.

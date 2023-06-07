@@ -219,11 +219,45 @@ impl Default for LogOptions {
     }
 }
 
+/// Ensure uses of the [`log`] crate do not panic after the [`GlobalLoggerGuard`] is dropped.
+///
+/// The [`log`] crate is integrated with [`slog`] using [`slog_stdlog`] create.
+/// This sets up a global logger for the ['log`] crate which sends events to the [`slog::Logger`]
+/// currently active in the [`slog_scope`] crate.
+///
+/// The [`slog_scope`] crate allows de-initialising the global logger when the
+/// [`GlobalLoggerGuard`] is dropped but the global [`log`] logger cannot be unset.
+/// The causes uses of [`log`] macros to panic after the [`GlobalLoggerGuard`] is dropped.
+///
+/// To work around the un-initialisation limitation in the [`log`] and [`slog_stdlog`] crates
+/// this guard wraps [`GlobalLoggerGuard`].
+/// When this guard is dropped:
+///
+/// 1. The wrapped [`GlobalLoggerGuard`] is dropped.
+/// 2. A new global [`slog::Logger`] is configured to [`slog::Discard`] events.
+/// 3. [`slog_scope`] is informed NOT to drop the newly installed global logger.
+///
+/// This results in the original [`slog::Logger`] being dropped as expected but equally ensures
+/// all uses of the [`log`] crate remain safe in the presence of the [`slog_stdlog`] hook.
+///
+/// [`GlobalLoggerGuard`]: slog_scope::GlobalLoggerGuard
+pub struct StdLogSafeGuard(Option<slog_scope::GlobalLoggerGuard>);
+
+impl Drop for StdLogSafeGuard {
+    fn drop(&mut self) {
+        let guard = match self.0.take() {
+            None => return,
+            Some(guard) => guard,
+        };
+        drop(guard);
+        let noop = slog::Logger::root(slog::Discard, slog::o!());
+        let guard = slog_scope::set_global_logger(noop);
+        guard.cancel_reset();
+    }
+}
+
 /// Initialise a root logger based on the provided configuration.
-pub fn initialise(
-    conf: LogConfig,
-    options: LogOptions,
-) -> (slog::Logger, Option<slog_scope::GlobalLoggerGuard>) {
+pub fn initialise(conf: LogConfig, options: LogOptions) -> (slog::Logger, StdLogSafeGuard) {
     // Build the root logger first.
     let builder = match conf.mode {
         LogMode::Json => LogBuilder::json(std::io::stdout(), conf.log_async),
@@ -232,11 +266,11 @@ pub fn initialise(
     let logger = builder.level(conf.level).levels(conf.levels).finish();
 
     // Initialise slog_scope and slog_stdlog libraries if `log` capture is desired.
-    let mut slog_scope_guard = None;
+    let mut slog_scope_guard = StdLogSafeGuard(None);
     if options.capture_log_crate {
         let guard = slog_scope::set_global_logger(logger.clone());
         slog_stdlog::init().expect("capture of log crate initialisation failed");
-        slog_scope_guard = Some(guard);
+        slog_scope_guard = StdLogSafeGuard(Some(guard));
     }
 
     // Return the root logger.
