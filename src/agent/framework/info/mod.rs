@@ -11,19 +11,19 @@ use anyhow::Result;
 use crate::agent::models::Node;
 
 mod node;
+mod store_version;
 
 #[cfg(test)]
 mod tests;
 
-/// Interface for Agents to get specification-defined information from a Store.
-#[async_trait::async_trait]
-pub trait NodeInfo: Clone + Send + Sync + 'static {
-    /// Additional context passed to requests.
-    type Context;
-
-    /// Obtain information about the node, even when the store is not running.
-    async fn node_info(&self, context: &Self::Context) -> Result<Node>;
-}
+pub use self::store_version::StoreVersionChain;
+pub use self::store_version::StoreVersionCommand;
+pub use self::store_version::StoreVersionCommandConf;
+pub use self::store_version::StoreVersionCommandError;
+pub use self::store_version::StoreVersionFile;
+pub use self::store_version::StoreVersionFileError;
+pub use self::store_version::StoreVersionFixed;
+pub use self::store_version::StoreVersionStrategy;
 
 /// Registers an [`NodeInfo`] implementation as an [`actix_web`] service.
 #[derive(Clone, Debug)]
@@ -55,6 +55,16 @@ where
             );
         scope.register(config)
     }
+}
+
+/// Interface for Agents to get specification-defined information from a Store.
+#[async_trait::async_trait]
+pub trait NodeInfo: Clone + Send + Sync + 'static {
+    /// Additional context passed to requests.
+    type Context;
+
+    /// Obtain information about the node, even when the store is not running.
+    async fn node_info(&self, context: &Self::Context) -> Result<Node>;
 }
 
 /// Wrap an [`NodeInfo`] type into an [`actix_web`] service factory.

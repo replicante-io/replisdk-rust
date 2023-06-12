@@ -90,6 +90,8 @@ impl ServerConfig {
     ///
     /// The focus of opinionated builds is to avoid as much logic as possible in applications.
     /// To achieve this, choices are made in the builder that may limit otherwise possible options.
+    ///
+    /// [`Server`]: actix_web::dev::Server
     pub fn opinionated(self, app: AppConfigurer) -> OpinionatedBuilder {
         OpinionatedBuilder {
             app,

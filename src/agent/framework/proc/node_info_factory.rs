@@ -29,6 +29,7 @@ pub trait NodeInfoFactory {
 }
 
 /// Arguments provided to the [`NodeInfo`] initialisation method [`NodeInfoFactory::factory`].
+#[derive(Clone)]
 pub struct NodeInfoFactoryArgs<'a, C>
 where
     C: Clone + std::fmt::Debug + PartialEq + Serialize + DeserializeOwned,

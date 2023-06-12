@@ -27,8 +27,11 @@ agent-framework = [
   "actix-web",
   "anyhow",
   "async-trait",
+  "serde_yaml",
   "slog",
   "tokio",
+  "tokio/fs",
+  "tokio/process",
 
   "agent-models",
   "runtime-actix_builder",
@@ -115,6 +118,7 @@ opentelemetry-otlp = { version = "^0.12", optional = true }
 sentry = { version = "^0.31", optional = true }
 serde = { version = "^1.0", optional = true, features = ["derive"] }
 serde_json = { version = "^1.0", optional = true }
+serde_yaml = { version = "^0.9", optional = true }
 slog = { version = "^2.0", optional = true }
 slog-async = { version = "^2.0", optional = true }
 slog-envlogger = { version = "^2.0", optional = true }

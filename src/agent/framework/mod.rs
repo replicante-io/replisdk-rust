@@ -85,6 +85,14 @@ mod proc;
 pub use self::conf::AgentConf;
 pub use self::conf::AgentOptions;
 pub use self::info::NodeInfo;
+pub use self::info::StoreVersionChain;
+pub use self::info::StoreVersionCommand;
+pub use self::info::StoreVersionCommandConf;
+pub use self::info::StoreVersionCommandError;
+pub use self::info::StoreVersionFile;
+pub use self::info::StoreVersionFileError;
+pub use self::info::StoreVersionFixed;
+pub use self::info::StoreVersionStrategy;
 pub use self::node_id::detect_node_id;
 pub use self::node_id::NodeIdDetectError;
 pub use self::proc::Agent;
@@ -110,5 +118,14 @@ impl FromRequest for DefaultContext {
             .map(|logger| logger.as_ref().clone())
             .expect("no slog::Logger attached to actix-web App");
         std::future::ready(Ok(DefaultContext { logger }))
+    }
+}
+
+#[cfg(test)]
+impl DefaultContext {
+    /// Create a context useful for texts.
+    pub fn fixture() -> DefaultContext {
+        let logger = Logger::root(slog::Discard, slog::o!());
+        DefaultContext { logger }
     }
 }
