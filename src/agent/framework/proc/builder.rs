@@ -1,4 +1,6 @@
 //! Builder for the entire Agent process.
+use std::time::Duration;
+
 use actix_web::FromRequest;
 use anyhow::Result;
 use serde::de::DeserializeOwned;
@@ -130,7 +132,7 @@ where
         let shutdown = self
             .shutdown
             .logger(telemetry.logger.clone())
-            .watch_signal_with_default();
+            .graceful_shutdown_timeout(Duration::from_secs(conf.runtime.shutdown_grace_sec));
         slog::info!(telemetry.logger, "Process telemetry initialised");
 
         // Initialise info gathering.

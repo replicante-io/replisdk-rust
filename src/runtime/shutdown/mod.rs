@@ -19,7 +19,7 @@ type WatchTask<T> = JoinHandle<Result<T>>;
 type WatchTaskOutput<T> = Option<<WatchTask<T> as Future>::Output>;
 
 /// Default time to wait for graceful shutdown to complete.
-pub const DEFAULT_SHUTDOWN_GRACE_TIMEOUT: u64 = 5 * 60;
+pub const DEFAULT_SHUTDOWN_GRACE_TIMEOUT: u64 = 2 * 60;
 
 /// Exit code for abrupt exit caused by user signal during graceful shutdown.
 const FORCE_SHUTDOWN_EXIT_CODE: i32 = 42;

@@ -4,6 +4,7 @@ use serde::Deserialize;
 use serde::Serialize;
 
 use crate::runtime::actix_web::ServerConfig;
+use crate::runtime::shutdown::DEFAULT_SHUTDOWN_GRACE_TIMEOUT;
 use crate::runtime::telemetry::TelemetryConfig;
 use crate::runtime::tokio_conf::TokioRuntimeConf;
 
@@ -28,9 +29,9 @@ where
     #[serde(default)]
     pub node_id: Option<String>,
 
-    /// Tokio Runtime configuration.
+    /// Process runtime configuration.
     #[serde(default)]
-    pub runtime: TokioRuntimeConf,
+    pub runtime: RuntimeConf,
 
     /// Telemetry configuration for the agent.
     #[serde(default)]
@@ -56,4 +57,31 @@ where
 pub struct AgentOptions {
     /// Prefix for web request metrics names.
     pub requests_metrics_prefix: &'static str,
+}
+
+/// Container for the complete agent runtime configuration.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct RuntimeConf {
+    /// Allowed time, in seconds, for operations to complete once process shutdown begins.
+    #[serde(default = "RuntimeConf::default_shutdown_grace")]
+    pub shutdown_grace_sec: u64,
+
+    /// Tokio Runtime configuration.
+    #[serde(default, flatten)]
+    pub tokio: TokioRuntimeConf,
+}
+
+impl RuntimeConf {
+    fn default_shutdown_grace() -> u64 {
+        DEFAULT_SHUTDOWN_GRACE_TIMEOUT
+    }
+}
+
+impl Default for RuntimeConf {
+    fn default() -> Self {
+        RuntimeConf {
+            shutdown_grace_sec: Self::default_shutdown_grace(),
+            tokio: Default::default(),
+        }
+    }
 }
