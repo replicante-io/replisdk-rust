@@ -18,6 +18,8 @@ use crate::runtime::telemetry::initialise as telemetry_init;
 use crate::runtime::telemetry::TelemetryOptions;
 
 use super::super::info;
+use super::Validator;
+use super::ValidatorArgs;
 
 /// Configure a process to run a Replicante Agent.
 ///
@@ -62,6 +64,7 @@ where
     options: Option<AgentOptions>,
     shutdown: ShutdownManagerBuilder<()>,
     telemetry_options: Option<TelemetryOptions>,
+    validator: Box<dyn Validator>,
 }
 
 impl<C, IF> Agent<C, IF>
@@ -81,6 +84,7 @@ where
             options: None,
             shutdown,
             telemetry_options: None,
+            validator: Box::new(super::validate::NoOpValidator {}),
         }
     }
 
@@ -135,6 +139,11 @@ where
             .graceful_shutdown_timeout(Duration::from_secs(conf.runtime.shutdown_grace_sec));
         slog::info!(telemetry.logger, "Process telemetry initialised");
 
+        // Run custom agent validation logic.
+        self.validator.validate(ValidatorArgs {
+            logger: &telemetry.logger,
+        }).await?;
+
         // Initialise info gathering.
         slog::debug!(telemetry.logger, "Initialising node information gatherer");
         let node_info = node_info
@@ -171,6 +180,15 @@ where
     /// Set the [`TelemetryOptions`] for the agent process to use.
     pub fn telemetry_options(mut self, options: TelemetryOptions) -> Self {
         self.telemetry_options = Some(options);
+        self
+    }
+
+    /// Set the [`Validator`] for the agent process to use during process initialisation.
+    pub fn validate_with<V>(mut self, validator: V) -> Self
+    where
+        V: Validator + 'static,
+    {
+        self.validator = Box::new(validator);
         self
     }
 }
