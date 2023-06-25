@@ -107,6 +107,9 @@ impl OpinionatedBuilder {
             let metrics_res = actix_web::web::resource(metrics_path)
                 .route(actix_web::web::get().to(export.clone()));
             app.service(metrics_res).wrap(metrics.clone())
+
+            // TODO(tracing): Configure request tracing.
+            //app
         });
         if let Some(logger) = logger {
             slog::info!(logger, "Starting HTTP Server bound at {}", &self.conf.bind);

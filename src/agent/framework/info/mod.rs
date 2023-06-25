@@ -9,8 +9,11 @@ use actix_web::FromRequest;
 use anyhow::Result;
 
 use crate::agent::models::Node;
+use crate::agent::models::ShardsInfo;
+use crate::agent::models::StoreExtras;
 
 mod node;
+mod shards;
 mod store_version;
 
 #[cfg(test)]
@@ -52,6 +55,16 @@ where
                 actix_web::web::resource("/info/node")
                     .guard(actix_web::guard::Get())
                     .to(node::info_node::<I>),
+            )
+            .service(
+                actix_web::web::resource("/info/shards")
+                    .guard(actix_web::guard::Get())
+                    .to(shards::info_shards::<I>),
+            )
+            .service(
+                actix_web::web::resource("/info/store")
+                    .guard(actix_web::guard::Get())
+                    .to(node::info_store::<I>),
             );
         scope.register(config)
     }
@@ -65,6 +78,12 @@ pub trait NodeInfo: Clone + Send + Sync + 'static {
 
     /// Obtain information about the node, even when the store is not running.
     async fn node_info(&self, context: &Self::Context) -> Result<Node>;
+
+    /// Obtain information about all shards managed by the node.
+    async fn shards(&self, context: &Self::Context) -> Result<ShardsInfo>;
+
+    /// Obtain information about the node only available when the store process is healthy.
+    async fn store_info(&self, context: &Self::Context) -> Result<StoreExtras>;
 }
 
 /// Wrap an [`NodeInfo`] type into an [`actix_web`] service factory.

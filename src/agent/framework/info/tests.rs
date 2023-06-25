@@ -8,6 +8,11 @@ use crate::agent::framework::DefaultContext;
 use crate::agent::framework::NodeInfo;
 use crate::agent::models::AgentVersion;
 use crate::agent::models::Node;
+use crate::agent::models::Shard;
+use crate::agent::models::ShardCommitOffset;
+use crate::agent::models::ShardRole;
+use crate::agent::models::ShardsInfo;
+use crate::agent::models::StoreExtras;
 use crate::agent::models::StoreVersion;
 
 use super::into_actix_service;
@@ -43,6 +48,25 @@ impl NodeInfo for FakeAgent {
             },
         })
     }
+
+    async fn shards(&self, _: &Self::Context) -> Result<ShardsInfo> {
+        let shard = Shard {
+            commit_offset: ShardCommitOffset::seconds(10),
+            lag: None,
+            role: ShardRole::Recovering,
+            shard_id: "shard-mock".into(),
+        };
+        Ok(ShardsInfo {
+            shards: vec![shard],
+        })
+    }
+
+    async fn store_info(&self, _: &Self::Context) -> Result<StoreExtras> {
+        Ok(StoreExtras {
+            cluster_id: "cluster-mock".into(),
+            attributes: Default::default(),
+        })
+    }
 }
 
 #[tokio::test]
@@ -59,4 +83,42 @@ async fn info_node() {
     let node: Node = read_body_json(res).await;
     assert_eq!(node.node_id, "id-test-node");
     assert_eq!(node.store_id, "test.mock");
+}
+
+#[tokio::test]
+async fn info_store() {
+    let logger = slog::Logger::root(slog::Discard {}, slog::o!());
+    let agent = into_actix_service(FakeAgent::new(), logger);
+    let app = actix_web::App::new().service(agent);
+    let req = TestRequest::get().uri("/info/store").to_request();
+
+    let app = init_service(app).await;
+    let res = call_service(&app, req).await;
+    assert_eq!(res.status(), actix_web::http::StatusCode::OK);
+
+    let store: StoreExtras = read_body_json(res).await;
+    assert_eq!(store.cluster_id, "cluster-mock");
+}
+
+#[tokio::test]
+async fn shards() {
+    let logger = slog::Logger::root(slog::Discard {}, slog::o!());
+    let agent = into_actix_service(FakeAgent::new(), logger);
+    let app = actix_web::App::new().service(agent);
+    let req = TestRequest::get().uri("/info/shards").to_request();
+
+    let app = init_service(app).await;
+    let res = call_service(&app, req).await;
+    assert_eq!(res.status(), actix_web::http::StatusCode::OK);
+
+    let info: ShardsInfo = read_body_json(res).await;
+    assert_eq!(
+        info.shards,
+        vec![Shard {
+            commit_offset: ShardCommitOffset::seconds(10),
+            lag: None,
+            role: ShardRole::Recovering,
+            shard_id: "shard-mock".into(),
+        }]
+    );
 }

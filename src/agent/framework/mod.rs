@@ -39,7 +39,14 @@
 //!
 //! ## Node Information
 //!
-//! TODO: the node info trait
+//! The agent specification defines a some node information that must be provided.
+//!
+//! Since store specific logic is needed to generate this information the Agent SDK
+//! provides a [`NodeInfo`] trait defining the information lookup interface.
+//!
+//! You can then provide a [`NodeInfoFactory`] implementation to the [`Agent`] builder.
+//! The [`Agent`] will then use the [`NodeInfoFactory`] and its returned [`NodeInfo`]
+//! to fulfil the agent specification.
 //!
 //! ## Implementing actions
 //!
