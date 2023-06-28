@@ -25,8 +25,10 @@ agent = ["agent-framework", "agent-models"]
 # Enable Agent framework code.
 agent-framework = [
   "actix-web",
+  "actix-web/openssl",
   "anyhow",
   "async-trait",
+  "openssl",
   "serde_yaml",
   "slog",
   "tokio",
@@ -113,6 +115,7 @@ anyhow = { version = "^1.0", features = ["backtrace"], optional = true }
 async-trait = { version = "^0.1", optional = true }
 futures = { version = "^0.3", optional = true }
 futures-util = {version = "^0.3", optional = true }
+openssl = { version = "^0.10", optional = true }
 opentelemetry = { version = "^0.19", optional = true, features = ["rt-tokio"] }
 opentelemetry-otlp = { version = "^0.12", optional = true }
 sentry = { version = "^0.31", optional = true }

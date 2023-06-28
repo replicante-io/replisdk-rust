@@ -9,8 +9,76 @@ http:
   # Resolves socket address(es) and binds server to created listener(s).
   bind: "localhost:6000"
 
+  # Maximum time in milliseconds allowed for clients to send all request headers.
+  #
+  # If a client takes longer to transmit all request headers the request is failed.
+  #
+  # A value of zero disables the timeout.
+  client_request_timeout: ~
+
+  # Server preference for how long to keep connections alive when idle.
+  #
+  # A value of zero disables keep alive and connections will be
+  # closed immediately after the response is sent.
+  keep_alive: ~
+
   # Format of server access logs.
+  #
+  # Rules for the format string are defined at
+  # <https://docs.rs/actix-web/latest/actix_web/middleware/struct.Logger.html#format>.
   log_format: ~
+
+  # Maximum number of concurrent connections for each server worker.
+  #
+  # This option is available for both TLS and non-TLS modes due to the greatly
+  # different CPU requirements.
+  #
+  # Once the limit is reach listening sockets will stop accepting connections
+  # until currently open connections are closed.
+  max_connections: ~
+
+  # Maximum number of concurrent TLS connections for each server worker.
+  #
+  # This option is available for both TLS and non-TLS modes due to the greatly
+  # different CPU requirements.
+  #
+  # Once the limit is reach listening sockets will stop accepting connections
+  # until currently open connections are closed.
+  max_connections_tls: ~
+
+  # Time in seconds workers are given to complete requests in progress when a shutdown
+  # signal is received.
+  shutdown_timeout: ~
+
+  # Configure the server to run with TLS encryption.
+  tls: ~
+  #  # Path to a PEM bundle of Certificate Authorities to verify client certificates with.
+  #  #
+  #  # When this option is set, clients MUST provide a certificate that is valid.
+  #  client_ca_bundle: ~
+  #
+  #  # Enable TLS for the server.
+  #  enabled: true
+  #
+  #  # Maximum time in milliseconds a TLS handshake must complete in.
+  #  #
+  #  # If the handshake does not complete in time the connection is closed.
+  #  handshake_timeout: ~
+  #
+  #  # Path to the PEM encoded server private certificate file.
+  #  #
+  #  # REQUIRED when the TLS block is not empty.
+  #  server_private_cert: /path/to/cert.pem
+  #
+  #  # Path to the PEM encoded server private key file.
+  #  #
+  #  # REQUIRED when the TLS block is not empty.
+  #  server_private_key: /path/to/key.pem
+
+  # Number of workers handling HTTP requests.
+  #
+  # Defaults to the number of CPUs available.
+  workers: ~
 
 # ID of the node as defined by the platform the node runs on.
 #
@@ -83,7 +151,7 @@ telemetry:
   # OpenTelemetry configuration for the process.
   otel:
     # Enable export of data using the OpenTelemetry protocol.
-    enabled: true
+    enabled: false
 
     # GRPC endpoint of the OpenTelemetry agent to send data to.
     endpoint: ~

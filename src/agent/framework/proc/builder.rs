@@ -140,9 +140,11 @@ where
         slog::info!(telemetry.logger, "Process telemetry initialised");
 
         // Run custom agent validation logic.
-        self.validator.validate(ValidatorArgs {
-            logger: &telemetry.logger,
-        }).await?;
+        self.validator
+            .validate(ValidatorArgs {
+                logger: &telemetry.logger,
+            })
+            .await?;
 
         // Initialise info gathering.
         slog::debug!(telemetry.logger, "Initialising node information gatherer");

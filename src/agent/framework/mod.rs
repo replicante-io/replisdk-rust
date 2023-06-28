@@ -105,6 +105,8 @@ pub use self::node_id::NodeIdDetectError;
 pub use self::proc::Agent;
 pub use self::proc::NodeInfoFactory;
 pub use self::proc::NodeInfoFactoryArgs;
+pub use self::proc::Validator;
+pub use self::proc::ValidatorArgs;
 
 /// Default additional context for [`NodeInfo`] implementations.
 ///

@@ -54,6 +54,38 @@ pub enum BuildError {
     /// - The address the bind failed for.
     #[error("unable to bind the server to '{0}'")]
     Bind(String),
+
+    /// Unable to set client CA certificates from file.
+    ///
+    /// Error parameters:
+    ///
+    /// - The path to the client CA bundle file.
+    #[error("unable to set client CA certificates from file '{0}")]
+    TlsClientCAs(String),
+
+    /// Unable to initialise TLS engine.
+    ///
+    /// Error parameters:
+    ///
+    /// - The TLS engine that was used (for example: openssl).
+    #[error("unable to initialise {0} TLS engine")]
+    TlsInit(&'static str),
+
+    /// Unable to set server certificate from PEM file.
+    ///
+    /// Error parameters:
+    ///
+    /// - The path to the server certificate file.
+    #[error("unable to set server certificate from PEM file '{0}")]
+    TlsServerCert(String),
+
+    /// Unable to set server private key from PEM file.
+    ///
+    /// Error parameters:
+    ///
+    /// - The path to the server private key file.
+    #[error("unable to set server private key from PEM file '{0}")]
+    TlsServerKey(String),
 }
 
 /// Build a [`Server`] instance with the standard configuration applied.
