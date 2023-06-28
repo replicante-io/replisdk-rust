@@ -3,6 +3,8 @@ use std::fmt::Debug;
 use std::sync::Arc;
 
 use actix_web::dev::Server;
+use actix_web::middleware::Compress;
+use actix_web::middleware::Condition;
 use actix_web::web::ServiceConfig;
 use actix_web::App;
 use actix_web::HttpServer;
@@ -138,10 +140,15 @@ impl OpinionatedBuilder {
             // Configure request metrics collection and export.
             let metrics_res = actix_web::web::resource(metrics_path)
                 .route(actix_web::web::get().to(export.clone()));
-            app.service(metrics_res).wrap(metrics.clone())
+            let app = app.service(metrics_res).wrap(metrics.clone());
 
             // TODO(tracing): Configure request tracing.
-            //app
+
+            // Configure standard middleware.
+            app.wrap(Condition::new(
+                self.conf.compress_responses,
+                Compress::default(),
+            ))
         });
         if let Some(logger) = logger {
             slog::info!(logger, "Starting HTTP Server bound at {}", &self.conf.bind);

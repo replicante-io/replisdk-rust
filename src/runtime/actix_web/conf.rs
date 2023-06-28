@@ -42,6 +42,12 @@ pub struct ServerConfig {
     #[serde(default)]
     pub client_request_timeout: Option<u64>,
 
+    /// Enable response compression, if supported by clients.
+    ///
+    /// The compression method is negotiated with the client using the `Accept-Encoding` header.
+    #[serde(default = "ServerConfig::default_compress_responses")]
+    pub compress_responses: bool,
+
     /// Server preference for how long to keep connections alive when idle.
     ///
     /// A value of zero disables keep alive and connections will be
@@ -90,6 +96,10 @@ impl ServerConfig {
     fn default_bind() -> String {
         "localhost:8000".into()
     }
+
+    fn default_compress_responses() -> bool {
+        true
+    }
 }
 
 impl Default for ServerConfig {
@@ -98,6 +108,7 @@ impl Default for ServerConfig {
             backlog: Default::default(),
             bind: Self::default_bind(),
             client_request_timeout: None,
+            compress_responses: true,
             keep_alive: None,
             log_format: None,
             max_connections: None,
