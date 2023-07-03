@@ -9,10 +9,10 @@ use crate::runtime::telemetry::TelemetryConfig;
 use crate::runtime::tokio_conf::TokioRuntimeConf;
 
 /// Container for the complete agent configuration.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AgentConf<C>
 where
-    C: Clone + std::fmt::Debug + PartialEq + Serialize + DeserializeOwned,
+    C: Clone + std::fmt::Debug + Serialize + DeserializeOwned,
 {
     /// Agent configuration specific to the implementation.
     #[serde(flatten, deserialize_with = "C::deserialize")]
@@ -40,7 +40,7 @@ where
 
 impl<C> Default for AgentConf<C>
 where
-    C: Clone + std::fmt::Debug + Default + PartialEq + Serialize + DeserializeOwned,
+    C: Clone + std::fmt::Debug + Default + Serialize + DeserializeOwned,
 {
     fn default() -> Self {
         AgentConf {

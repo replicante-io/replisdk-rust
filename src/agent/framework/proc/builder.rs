@@ -18,8 +18,9 @@ use crate::runtime::telemetry::initialise as telemetry_init;
 use crate::runtime::telemetry::TelemetryOptions;
 
 use super::super::info;
-use super::Validator;
-use super::ValidatorArgs;
+use super::init::InitialiseHookVec;
+use super::InitialiseHook;
+use super::InitialiseHookArgs;
 
 /// Configure a process to run a Replicante Agent.
 ///
@@ -58,13 +59,13 @@ where
     IF::NodeInfo: NodeInfo,
     IF::Context: FromRequest,
 {
-    node_info: Option<IF>,
     app: AppConfigurer,
     conf: Option<AgentConf<C>>,
+    initialisers: InitialiseHookVec<C>,
+    node_info: Option<IF>,
     options: Option<AgentOptions>,
     shutdown: ShutdownManagerBuilder<()>,
     telemetry_options: Option<TelemetryOptions>,
-    validator: Box<dyn Validator>,
 }
 
 impl<C, IF> Agent<C, IF>
@@ -78,13 +79,13 @@ where
     pub fn build() -> Self {
         let shutdown = ShutdownManager::builder().watch_signal_with_default();
         Agent {
-            node_info: None,
             app: AppConfigurer::default(),
             conf: None,
+            initialisers: Default::default(),
+            node_info: None,
             options: None,
             shutdown,
             telemetry_options: None,
-            validator: Box::new(super::validate::NoOpValidator {}),
         }
     }
 
@@ -139,12 +140,15 @@ where
             .graceful_shutdown_timeout(Duration::from_secs(conf.runtime.shutdown_grace_sec));
         slog::info!(telemetry.logger, "Process telemetry initialised");
 
-        // Run custom agent validation logic.
-        self.validator
-            .validate(ValidatorArgs {
-                logger: &telemetry.logger,
-            })
-            .await?;
+        // Run custom agent initialisation hooks.
+        slog::debug!(telemetry.logger, "Running agent initialisation hooks");
+        let initialiser_args = InitialiseHookArgs {
+            conf: &conf,
+            telemetry: &telemetry,
+        };
+        for initialiser in self.initialisers {
+            initialiser.initialise(&initialiser_args).await?;
+        }
 
         // Initialise info gathering.
         slog::debug!(telemetry.logger, "Initialising node information gatherer");
@@ -185,12 +189,12 @@ where
         self
     }
 
-    /// Set the [`Validator`] for the agent process to use during process initialisation.
-    pub fn validate_with<V>(mut self, validator: V) -> Self
+    /// Add a [`InitialiseHook`] to the list of process initialisers.
+    pub fn initialise_with<I>(mut self, initialiser: I) -> Self
     where
-        V: Validator + 'static,
+        I: InitialiseHook<Conf = C> + 'static,
     {
-        self.validator = Box::new(validator);
+        self.initialisers.push(Box::new(initialiser));
         self
     }
 }

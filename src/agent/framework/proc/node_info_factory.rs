@@ -13,7 +13,7 @@ use crate::runtime::telemetry::Telemetry;
 #[async_trait::async_trait]
 pub trait NodeInfoFactory {
     /// Agent configuration specific to the implementation.
-    type Conf: Clone + std::fmt::Debug + PartialEq + Serialize + DeserializeOwned;
+    type Conf: Clone + std::fmt::Debug + Serialize + DeserializeOwned;
 
     /// Additional context passed to information requests.
     type Context: FromRequest;
@@ -32,7 +32,7 @@ pub trait NodeInfoFactory {
 #[derive(Clone)]
 pub struct NodeInfoFactoryArgs<'a, C>
 where
-    C: Clone + std::fmt::Debug + PartialEq + Serialize + DeserializeOwned,
+    C: Clone + std::fmt::Debug + Serialize + DeserializeOwned,
 {
     /// Full configuration for the agent process.
     pub conf: &'a AgentConf<C>,

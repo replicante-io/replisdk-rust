@@ -103,10 +103,10 @@ pub use self::info::StoreVersionStrategy;
 pub use self::node_id::detect_node_id;
 pub use self::node_id::NodeIdDetectError;
 pub use self::proc::Agent;
+pub use self::proc::InitialiseHook;
+pub use self::proc::InitialiseHookArgs;
 pub use self::proc::NodeInfoFactory;
 pub use self::proc::NodeInfoFactoryArgs;
-pub use self::proc::Validator;
-pub use self::proc::ValidatorArgs;
 
 /// Default additional context for [`NodeInfo`] implementations.
 ///
