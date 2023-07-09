@@ -83,7 +83,7 @@
 //! - [`SentryOptions::release`]: the identifier of the current application and version.
 //!   You can create a `SentryOptions` struct from a release with [`SentryOptions::for_release`].
 //!   For example, you can get a static release name with:
-//!   ```
+//!   ```ignore
 //!   const RELEASE_ID: &str = concat!(env!("CARGO_PKG_NAME"), "@", env!("CARGO_PKG_VERSION"));
 //!   ```
 //! - [`SentryOptions::in_app_include`]: a list of module prefixes for Sentry to consider part

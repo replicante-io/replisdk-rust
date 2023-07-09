@@ -6,8 +6,11 @@ use anyhow::Result;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
+use crate::agent::framework::info;
+use crate::agent::framework::store::Store;
 use crate::agent::framework::AgentConf;
 use crate::agent::framework::AgentOptions;
+use crate::agent::framework::Injector;
 use crate::agent::framework::NodeInfo;
 use crate::agent::framework::NodeInfoFactory;
 use crate::agent::framework::NodeInfoFactoryArgs;
@@ -17,7 +20,6 @@ use crate::runtime::shutdown::ShutdownManagerBuilder;
 use crate::runtime::telemetry::initialise as telemetry_init;
 use crate::runtime::telemetry::TelemetryOptions;
 
-use super::super::info;
 use super::init::InitialiseHookVec;
 use super::InitialiseHook;
 use super::InitialiseHookArgs;
@@ -139,6 +141,11 @@ where
             .logger(telemetry.logger.clone())
             .graceful_shutdown_timeout(Duration::from_secs(conf.runtime.shutdown_grace_sec));
         slog::info!(telemetry.logger, "Process telemetry initialised");
+
+        // Initialise agent globals.
+        let store = Store::initialise(&telemetry.logger, &conf.store_path).await?;
+        let injector = Injector { store };
+        Injector::initialise(&telemetry.logger, injector);
 
         // Run custom agent initialisation hooks.
         slog::debug!(telemetry.logger, "Running agent initialisation hooks");

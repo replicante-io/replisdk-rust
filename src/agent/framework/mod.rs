@@ -86,8 +86,11 @@ use slog::Logger;
 
 mod conf;
 mod info;
+mod injector;
 mod node_id;
 mod proc;
+
+pub mod store;
 
 pub use self::conf::AgentConf;
 pub use self::conf::AgentOptions;
@@ -100,6 +103,7 @@ pub use self::info::StoreVersionFile;
 pub use self::info::StoreVersionFileError;
 pub use self::info::StoreVersionFixed;
 pub use self::info::StoreVersionStrategy;
+pub use self::injector::Injector;
 pub use self::node_id::detect_node_id;
 pub use self::node_id::NodeIdDetectError;
 pub use self::proc::Agent;

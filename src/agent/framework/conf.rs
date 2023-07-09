@@ -33,6 +33,10 @@ where
     #[serde(default)]
     pub runtime: RuntimeConf,
 
+    /// Path to the persistence store for the agent.
+    #[serde(default = "AgentConf::<C>::default_store_path")]
+    pub store_path: String,
+
     /// Telemetry configuration for the agent.
     #[serde(default)]
     pub telemetry: TelemetryConfig,
@@ -47,9 +51,19 @@ where
             custom: Default::default(),
             http: Default::default(),
             node_id: None,
-            telemetry: Default::default(),
             runtime: Default::default(),
+            store_path: AgentConf::<C>::default_store_path(),
+            telemetry: Default::default(),
         }
+    }
+}
+
+impl<C> AgentConf<C>
+where
+    C: Clone + std::fmt::Debug + Serialize + DeserializeOwned,
+{
+    fn default_store_path() -> String {
+        "agent.db".into()
     }
 }
 

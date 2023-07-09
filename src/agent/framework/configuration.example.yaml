@@ -116,6 +116,9 @@ runtime:
   # This number is best kept small and defaults to the number of CPU cores on the system.
   workers: ~
 
+# Path to the persistence store for the agent.
+store_path: "agent.db"
+
 # Telemetry configuration for the process.
 telemetry:
   # Logging configuration for the process.

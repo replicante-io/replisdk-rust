@@ -28,9 +28,13 @@ agent-framework = [
   "actix-web/openssl",
   "anyhow",
   "async-trait",
+  "once_cell",
   "openssl",
+  "refinery",
+  "rusqlite",
   "serde_yaml",
   "slog",
+  "tokio-rusqlite",
   "tokio",
   "tokio/fs",
   "tokio/process",
@@ -114,10 +118,14 @@ actix-web = { version = "^4.3", optional = true }
 anyhow = { version = "^1.0", features = ["backtrace"], optional = true }
 async-trait = { version = "^0.1", optional = true }
 futures = { version = "^0.3", optional = true }
-futures-util = {version = "^0.3", optional = true }
+futures-util = { version = "^0.3", optional = true }
+once_cell = { version = "^1.18", optional = true }
 openssl = { version = "^0.10", optional = true }
 opentelemetry = { version = "^0.19", optional = true, features = ["rt-tokio"] }
 opentelemetry-otlp = { version = "^0.12", optional = true }
+prometheus = { version = "^0.13", optional = true, features = ["process"] }
+refinery = { version = "^0.8", optional = true, features = ["rusqlite"] }
+rusqlite = { version = "^0.29", optional = true, features = ["bundled"] }
 sentry = { version = "^0.31", optional = true }
 serde = { version = "^1.0", optional = true, features = ["derive"] }
 serde_json = { version = "^1.0", optional = true }
@@ -131,7 +139,10 @@ slog-stdlog = { version = "^4.0", optional = true }
 slog-term = { version = "^2.0", optional = true }
 thiserror = { version = "^1.0", optional = true }
 tokio = { version = "^1.0", optional = true, features = ["macros", "rt", "signal", "sync", "time"] }
-prometheus = {version = "^0.13", optional = true, features = ["process"] }
+
+# Changes needed to support custom errors have not been published yet so point directly to repo.
+#tokio-rusqlite = { version = "^0.4", optional = true }
+tokio-rusqlite = { git = "https://github.com/programatik29/tokio-rusqlite.git", rev = "ee94a85", optional = true }
 
 # Always depend on the proc macros crate matching our exact version!
 replisdk-proc = { version = "=0.1.1", path = "./proc"}
