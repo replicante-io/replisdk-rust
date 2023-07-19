@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Agent implementation framework: definition of store for agents to persist data into.
 - Agent implementation framework: node information trait.
 - Agent implementation framework: reusable process initialisation logic.
+- Agent implementation framework: schedule and list actions.
 - Error type to bridge anyhow and `actix-web` response rendering.
 - Platform API models for cluster discovery.
 - Platform deprovisioning models.

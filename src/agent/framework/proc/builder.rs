@@ -6,6 +6,7 @@ use anyhow::Result;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
+use crate::agent::framework::actions::ActionsService;
 use crate::agent::framework::info;
 use crate::agent::framework::store::Store;
 use crate::agent::framework::AgentConf;
@@ -145,7 +146,7 @@ where
         // Initialise agent globals.
         let store = Store::initialise(&telemetry.logger, &conf.store_path).await?;
         let injector = Injector { store };
-        Injector::initialise(&telemetry.logger, injector);
+        Injector::initialise(&telemetry.logger, injector.clone());
 
         // Run custom agent initialisation hooks.
         slog::debug!(telemetry.logger, "Running agent initialisation hooks");
@@ -171,9 +172,12 @@ where
         let mut app = self.app;
         let logger = telemetry.logger.clone();
         app.with_config(move |conf| {
+            let actions = ActionsService::build(logger.clone()).with_injector(&injector);
             let info = node_info.clone();
             let info = info::into_actix_service(info, logger.clone());
-            let info = actix_web::web::scope("/api/unstable").service(info);
+            let info = actix_web::web::scope("/api/unstable")
+                .service(info)
+                .service(actions);
             conf.service(info);
         });
 

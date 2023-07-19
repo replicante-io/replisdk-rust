@@ -34,6 +34,7 @@ agent-framework = [
   "rusqlite",
   "serde_yaml",
   "slog",
+  "thiserror",
   "tokio-rusqlite",
   "tokio",
   "tokio/fs",
@@ -47,7 +48,7 @@ agent-framework = [
   "utils-actix_error",
 ]
 # Enable definitions of agent data models.
-agent-models = ["serde", "serde_json"]
+agent-models = ["serde", "serde_json", "time", "uuid"]
 
 ## Platform features
 # Enable all platform related features.
@@ -138,7 +139,9 @@ slog-scope = { version = "^4.0", optional = true }
 slog-stdlog = { version = "^4.0", optional = true }
 slog-term = { version = "^2.0", optional = true }
 thiserror = { version = "^1.0", optional = true }
+time = { version = "^0.3", optional = true, features = ["formatting", "parsing", "serde"] }
 tokio = { version = "^1.0", optional = true, features = ["macros", "rt", "signal", "sync", "time"] }
+uuid = { version = "^1.4", optional = true, features = ["v4"] }
 
 # Changes needed to support custom errors have not been published yet so point directly to repo.
 #tokio-rusqlite = { version = "^0.4", optional = true }

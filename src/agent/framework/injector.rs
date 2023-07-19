@@ -52,4 +52,12 @@ impl Injector {
             .expect("global injector is not initialised")
             .clone()
     }
+
+    #[cfg(test)]
+    /// Initialise an injector to be used in tests.
+    pub async fn fixture() -> Self {
+        Self {
+            store: super::store::fixtures::store().await,
+        }
+    }
 }

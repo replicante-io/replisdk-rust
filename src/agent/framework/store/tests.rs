@@ -1,20 +1,11 @@
 //! Tests for the Agent Store module.
-use anyhow::Result;
 use rusqlite::Connection;
 
-use super::Store;
-use crate::agent::framework::DefaultContext;
-
-/// Create an in-memory store for tests to use.
-async fn store_factory() -> Result<Store> {
-    let context = DefaultContext::fixture();
-    let path = ":memory:";
-    Store::initialise(&context.logger, path).await
-}
+use super::fixtures;
 
 #[tokio::test]
 async fn initialise() {
-    let store = store_factory().await.expect("store to be initialised");
+    let store = fixtures::store().await;
     let migrations = store
         .store
         .call(fetch_migration_version)

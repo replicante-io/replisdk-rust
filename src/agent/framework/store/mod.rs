@@ -7,20 +7,31 @@ use anyhow::Result;
 use slog::Logger;
 use tokio_rusqlite::Connection;
 
-pub mod query;
+mod encoding;
 mod schema;
+mod statements;
 
+pub mod persist;
+pub mod query;
+
+#[cfg(test)]
+pub(super) mod fixtures;
 #[cfg(test)]
 mod tests;
 
+use self::persist::PersistOp;
+use self::persist::PersistOps;
+use self::persist::PersistResponses;
 use self::query::QueryOp;
+use self::query::QueryOps;
+use self::query::QueryResponses;
 use crate::agent::framework::DefaultContext;
 
 /// Special path requesting the use of an in-memory store.
 pub const MEMORY_PATH: &str = ":memory:";
 
 /// Manage persisted data needed for Agent operations.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Store {
     store: Connection,
 }
@@ -71,15 +82,38 @@ impl Store {
     ///
     /// The supported query operations are defined in the [`query`] module and
     /// determine the return type.
-    pub async fn query<O>(&self, _context: &DefaultContext, _op: O) -> Result<O::Response>
+    pub async fn query<O>(&self, _context: &DefaultContext, op: O) -> Result<O::Response>
     where
         O: QueryOp,
     {
-        todo!("implement query interface")
-        //let op = op.into();
-        //let response = match op {
-        //    // TODO
-        //};
-        //response.map(O::Response::from)
+        let op = op.into();
+        let response = match op {
+            QueryOps::ActionsFinished => statements::actions::finished(&self.store)
+                .await
+                .map(QueryResponses::ActionsList),
+            QueryOps::ActionsQueue => statements::actions::queue(&self.store)
+                .await
+                .map(QueryResponses::ActionsList),
+        };
+        response.map(O::Response::from)
+    }
+
+    /// Persist records to the agent store.
+    ///
+    /// The supported persist operations are defined in the [`persist`] module and
+    /// determine the return type.
+    pub async fn persist<O>(&self, _context: &DefaultContext, op: O) -> Result<O::Response>
+    where
+        O: PersistOp,
+    {
+        let op = op.into();
+        let response = match op {
+            PersistOps::ActionExecution(action) => {
+                statements::actions::persist(&self.store, action)
+                    .await
+                    .map(|_| PersistResponses::Success)
+            }
+        };
+        response.map(O::Response::from)
     }
 }

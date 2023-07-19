@@ -84,6 +84,7 @@ use actix_web::FromRequest;
 use actix_web::HttpRequest;
 use slog::Logger;
 
+mod actions;
 mod conf;
 mod info;
 mod injector;

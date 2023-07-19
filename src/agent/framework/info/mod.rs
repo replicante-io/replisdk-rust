@@ -35,11 +35,11 @@ where
     I: NodeInfo,
     I::Context: FromRequest,
 {
+    /// The [`slog::Logger`] usable to make [`DefaultContext`](super::DefaultContext) instances.
+    logger: slog::Logger,
+
     /// The [`NodeInfo`] instance to register endpoints for.
     node_info: I,
-
-    // The [`slog::Logger`] usable to make [`DefaultContext`](super::DefaultContext) instances.
-    logger: slog::Logger,
 }
 
 impl<I> HttpServiceFactory for ActixServiceFactory<I>
@@ -48,21 +48,21 @@ where
     I::Context: FromRequest,
 {
     fn register(self, config: &mut AppService) {
-        let scope = actix_web::web::scope("")
+        let scope = actix_web::web::scope("/info")
             .app_data(Data::new(self.logger))
             .app_data(Data::new(self.node_info))
             .service(
-                actix_web::web::resource("/info/node")
+                actix_web::web::resource("/node")
                     .guard(actix_web::guard::Get())
                     .to(node::info_node::<I>),
             )
             .service(
-                actix_web::web::resource("/info/shards")
+                actix_web::web::resource("/shards")
                     .guard(actix_web::guard::Get())
                     .to(shards::info_shards::<I>),
             )
             .service(
-                actix_web::web::resource("/info/store")
+                actix_web::web::resource("/store")
                     .guard(actix_web::guard::Get())
                     .to(node::info_store::<I>),
             );

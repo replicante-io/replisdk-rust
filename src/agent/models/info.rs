@@ -1,4 +1,4 @@
-//! Data structures for Replicante Agent related entities.
+//! Replicante Agent node information models.
 use std::collections::BTreeMap;
 
 use serde::Deserialize;
