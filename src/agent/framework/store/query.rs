@@ -1,4 +1,5 @@
 //! Store querying operations.
+use crate::agent::models::ActionExecution;
 use crate::agent::models::ActionExecutionList;
 
 pub(crate) use self::sealed::QueryOps;
@@ -11,6 +12,33 @@ use self::sealed::SealQueryOp;
 pub trait QueryOp: Into<QueryOps> + SealQueryOp {
     /// The return type of running a specific query operation.
     type Response: From<QueryResponses>;
+}
+
+/// Lookup an [`ActionExecution`] by ID.
+pub struct Action {
+    /// ID of the action to lookup.
+    pub id: uuid::Uuid,
+}
+impl SealQueryOp for Action {}
+impl QueryOp for Action {
+    type Response = Option<ActionExecution>;
+}
+
+impl Action {
+    /// Query for the [`ActionExecution`] record with the given ID.
+    pub fn new<U>(id: U) -> Action
+    where
+        U: Into<uuid::Uuid>,
+    {
+        let id = id.into();
+        Action { id }
+    }
+}
+
+impl From<Action> for QueryOps {
+    fn from(value: Action) -> Self {
+        QueryOps::Action(value.id)
+    }
 }
 
 /// Query the store for a list of finished [`ActionExecution`] records.
@@ -45,6 +73,7 @@ impl From<ActionsQueue> for QueryOps {
 
 /// Private module to seal as many implementation details as possible.
 mod sealed {
+    use crate::agent::models::ActionExecution;
     use crate::agent::models::ActionExecutionList;
 
     /// Super-trait to seal the [`QueryOp`](super::QueryOp) trait.
@@ -52,6 +81,9 @@ mod sealed {
 
     /// Enumeration of all supported query operations.
     pub enum QueryOps {
+        /// Lookup an [`ActionExecution`] record by ID.
+        Action(uuid::Uuid),
+
         /// List running and queued [`ActionExecution`] records.
         ActionsQueue,
 
@@ -61,6 +93,9 @@ mod sealed {
 
     /// Enumeration of query responses for all supported query operations.
     pub enum QueryResponses {
+        /// Result of an [`ActionExecution`] lookup query.
+        Action(Option<ActionExecution>),
+
         /// List of [`ActionExecution`] record summaries.
         ActionsList(ActionExecutionList),
     }
@@ -70,7 +105,16 @@ mod sealed {
         fn from(value: QueryResponses) -> Self {
             match value {
                 QueryResponses::ActionsList(value) => value,
-                //_ => panic!("unexpected result type for the given query operation"),
+                _ => panic!("unexpected result type for the given query operation"),
+            }
+        }
+    }
+
+    impl From<QueryResponses> for Option<ActionExecution> {
+        fn from(value: QueryResponses) -> Self {
+            match value {
+                QueryResponses::Action(value) => value,
+                _ => panic!("unexpected result type for the given query operation"),
             }
         }
     }

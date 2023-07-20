@@ -17,7 +17,7 @@ pub struct ActionExecution {
     /// Time the action was first created.
     ///
     /// An action execution may be created in systems other then Agents (such as Core).
-    /// In such cases the `create_time` is the time the action execution was created in the
+    /// In such cases the `created_time` is the time the action execution was created in the
     /// system other then the Agent (such as Core) and is passed to Agents.
     #[serde(with = "time::serde::rfc3339")]
     pub created_time: OffsetDateTime,
@@ -94,7 +94,7 @@ pub struct ActionExecutionRequest {
     /// Time the action was first created.
     ///
     /// An action execution may be created in systems other then Agents (such as Core).
-    /// In such cases the `create_time` is the time the action execution was created in the
+    /// In such cases the `created_time` is the time the action execution was created in the
     /// system other then the Agent (such as Core) and is passed to Agents.
     #[serde(default, with = "time::serde::rfc3339::option")]
     pub created_time: Option<OffsetDateTime>,

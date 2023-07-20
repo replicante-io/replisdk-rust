@@ -88,6 +88,9 @@ impl Store {
     {
         let op = op.into();
         let response = match op {
+            QueryOps::Action(id) => statements::actions::get(&self.store, id)
+                .await
+                .map(QueryResponses::Action),
             QueryOps::ActionsFinished => statements::actions::finished(&self.store)
                 .await
                 .map(QueryResponses::ActionsList),

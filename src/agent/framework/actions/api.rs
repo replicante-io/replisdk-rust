@@ -2,6 +2,7 @@
 use actix_web::dev::AppService;
 use actix_web::dev::HttpServiceFactory;
 use actix_web::web::Data;
+use actix_web::web::Path;
 use actix_web::HttpResponse;
 use actix_web::Responder;
 
@@ -50,11 +51,11 @@ impl HttpServiceFactory for ActionsService {
         actix_web::web::scope("/action")
             .app_data(Data::new(service))
             .app_data(Data::new(self.logger))
-            //.service(
-            //    actix_web::web::resource("/{action_id}")
-            //        .guard(actix_web::guard::Get())
-            //        .to(node::info_node::<I>),
-            //)
+            .service(
+                actix_web::web::resource("/{action_id}")
+                    .guard(actix_web::guard::Get())
+                    .to(lookup),
+            )
             .service(
                 actix_web::web::resource("")
                     .guard(actix_web::guard::Post())
@@ -84,6 +85,16 @@ pub async fn finished(
     context: DefaultContext,
 ) -> Result<impl Responder> {
     let query = store::query::ActionsFinished {};
+    let response = service.store.query(&context, query).await?;
+    Ok(HttpResponse::Ok().json(response))
+}
+
+pub async fn lookup(
+    service: Data<ActionsService>,
+    context: DefaultContext,
+    id: Path<uuid::Uuid>,
+) -> Result<impl Responder> {
+    let query = store::query::Action::new(id.into_inner());
     let response = service.store.query(&context, query).await?;
     Ok(HttpResponse::Ok().json(response))
 }
@@ -134,6 +145,7 @@ mod tests {
 
     use super::ActionsService;
     use crate::agent::framework::Injector;
+    use crate::agent::models::ActionExecution;
     use crate::agent::models::ActionExecutionList;
     use crate::agent::models::ActionExecutionRequest;
     use crate::agent::models::ActionExecutionResponse;
@@ -161,6 +173,32 @@ mod tests {
         assert_eq!(response.status(), actix_web::http::StatusCode::OK);
         let body: ActionExecutionList = read_body_json(response).await;
         assert_eq!(body.actions.len(), 1);
+    }
+
+    #[tokio::test]
+    async fn lookup_action() {
+        let injector = Injector::fixture().await;
+        let id = uuid::Uuid::new_v4();
+        let action = super::store::fixtures::action(id);
+        let context = super::DefaultContext::fixture();
+        injector
+            .store
+            .persist(&context, action.clone())
+            .await
+            .unwrap();
+
+        let service = actions_service(&injector);
+        let app = actix_web::App::new().service(service);
+        let app = init_service(app).await;
+
+        let request = TestRequest::get()
+            .uri(&format!("/action/{}", id))
+            .to_request();
+        let response = call_service(&app, request).await;
+
+        assert_eq!(response.status(), actix_web::http::StatusCode::OK);
+        let body: ActionExecution = read_body_json(response).await;
+        assert_eq!(body, action);
     }
 
     #[tokio::test]
