@@ -39,6 +39,7 @@ agent-framework = [
   "tokio",
   "tokio/fs",
   "tokio/process",
+  "tokio/time",
 
   "agent-models",
   "runtime-actix_builder",
@@ -46,6 +47,8 @@ agent-framework = [
   "runtime-shutdown_actix",
   "runtime-telemetry",
   "utils-actix_error",
+  "utils-error_json",
+  "utils-error_slog",
 ]
 # Enable definitions of agent data models.
 agent-models = ["serde", "serde_json", "time", "uuid"]
@@ -111,6 +114,10 @@ runtime-tokio_conf = ["tokio"]
 utils-actix_error = ["actix-web", "anyhow", "serde_json", "thiserror"]
 # Provides `actix_web` utilities to capture and export prometheus metrics.
 utils-actix_metrics = ["actix-web", "futures-util", "prometheus", "utils-actix_error"]
+# Utility function to encode an error into a JSON object.
+utils-error_json = ["anyhow", "serde_json"]
+# Provides a standard way to log errors as slog key/value pairs.
+utils-error_slog = ["anyhow", "slog"]
 
 [dependencies]
 actix-http = { version = "^3.0", optional = true }
@@ -149,6 +156,9 @@ tokio-rusqlite = { git = "https://github.com/programatik29/tokio-rusqlite.git", 
 
 # Always depend on the proc macros crate matching our exact version!
 replisdk-proc = { version = "=0.1.1", path = "./proc"}
+
+[dev-dependencies]
+rstest = "^0.18"
 
 [package.metadata.docs.rs]
 all-features = true

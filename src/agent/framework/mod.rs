@@ -84,13 +84,13 @@ use actix_web::FromRequest;
 use actix_web::HttpRequest;
 use slog::Logger;
 
-mod actions;
 mod conf;
 mod info;
 mod injector;
 mod node_id;
 mod proc;
 
+pub mod actions;
 pub mod store;
 
 pub use self::conf::AgentConf;

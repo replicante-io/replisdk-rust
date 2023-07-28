@@ -4,6 +4,7 @@ use std::sync::RwLock;
 use once_cell::sync::Lazy;
 use slog::Logger;
 
+use super::actions::ActionsRegistry;
 use super::store::Store;
 
 /// Singleton instance of the Process Globals container.
@@ -12,6 +13,12 @@ static GLOBAL_INJECTOR: Lazy<RwLock<Option<Injector>>> = Lazy::new(|| RwLock::ne
 /// Container for all process global dependencies to be injected in other components.
 #[derive(Clone)]
 pub struct Injector {
+    /// Registry of available action implementation for the agent.
+    pub actions: ActionsRegistry,
+
+    /// Global logger for the process.
+    pub logger: Logger,
+
     /// Agent persisted store.
     pub store: Store,
 }
@@ -22,7 +29,7 @@ impl Injector {
     /// # Panics
     ///
     /// Panics if an [`Injector`] has already been set.
-    pub(in crate::agent::framework) fn initialise(logger: &Logger, injector: Injector) {
+    pub(in crate::agent::framework) fn initialise(injector: Injector) {
         // Obtain a lock to initialise the global injector.
         let mut global_injector = GLOBAL_INJECTOR
             .write()
@@ -35,7 +42,10 @@ impl Injector {
         }
 
         // Set the global injector for the process.
-        slog::trace!(logger, "Initialising Global Injector for the process");
+        slog::trace!(
+            injector.logger,
+            "Initialising Global Injector for the process"
+        );
         *global_injector = Some(injector);
     }
 
@@ -57,6 +67,8 @@ impl Injector {
     /// Initialise an injector to be used in tests.
     pub async fn fixture() -> Self {
         Self {
+            actions: ActionsRegistry::build().finish(),
+            logger: Logger::root(slog::Discard, slog::o!()),
             store: super::store::fixtures::store().await,
         }
     }

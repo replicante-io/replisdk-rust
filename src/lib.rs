@@ -65,6 +65,8 @@
 //!
 //! * `utils-actix_error`: An `actix_web` error type that works with `anyhow::Error`.
 //! * `utils-actix_metrics`: Collect metrics about processed requests and an exporter all metrics.
+//! * `utils-error_json`: Utility function to encode an error into a JSON object.
+//! * `utils-error_slog`: Standard way to log errors as slog key/value pairs.
 //!
 //! # The experimental crate
 //!

@@ -25,9 +25,13 @@ pub struct ActionsService {
 }
 
 impl ActionsService {
-    /// Build an [`actix_web`] service factory to handle actions API requests.
-    pub fn build(logger: slog::Logger) -> ActionsServiceBuilder {
-        ActionsServiceBuilder { logger }
+    /// Initialise an [`ActionsService`] with dependencies from the given [`Injector`].
+    pub fn with_injector(injector: &Injector) -> ActionsService {
+        let logger = injector.logger.new(slog::o!("component" => "api"));
+        ActionsService {
+            logger,
+            store: injector.store.clone(),
+        }
     }
 }
 
@@ -62,20 +66,6 @@ impl HttpServiceFactory for ActionsService {
                     .to(schedule),
             )
             .register(config)
-    }
-}
-
-pub struct ActionsServiceBuilder {
-    // The [`slog::Logger`] usable to make [`DefaultContext`](super::DefaultContext) instances.
-    logger: slog::Logger,
-}
-
-impl ActionsServiceBuilder {
-    pub fn with_injector(self, injector: &Injector) -> ActionsService {
-        ActionsService {
-            logger: self.logger,
-            store: injector.store.clone(),
-        }
     }
 }
 
@@ -151,8 +141,7 @@ mod tests {
     use crate::agent::models::ActionExecutionResponse;
 
     fn actions_service(injector: &Injector) -> ActionsService {
-        let logger = slog::Logger::root(slog::Discard, slog::o!());
-        ActionsService::build(logger).with_injector(injector)
+        ActionsService::with_injector(injector)
     }
 
     #[tokio::test]

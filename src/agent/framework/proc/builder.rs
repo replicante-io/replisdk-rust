@@ -6,6 +6,9 @@ use anyhow::Result;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
+use crate::agent::framework::actions::ActionsExecutor;
+use crate::agent::framework::actions::ActionsRegistry;
+use crate::agent::framework::actions::ActionsRegistryBuilder;
 use crate::agent::framework::actions::ActionsService;
 use crate::agent::framework::info;
 use crate::agent::framework::store::Store;
@@ -51,7 +54,9 @@ use super::InitialiseHookArgs;
 /// To ensure agent initialisation can be implemented correctly the builder
 /// guarantees the following order of invocation for factories:
 ///
-/// 1. The [`NodeInfoFactory`] is called.
+/// 1. Initialisation functions registered with [`Agent::initialise_with`]
+///    in the order they are registered.
+/// 2. The [`NodeInfoFactory`] is called.
 pub struct Agent<C, IF>
 where
     // Type parameter for custom a agent configuration container.
@@ -62,6 +67,7 @@ where
     IF::NodeInfo: NodeInfo,
     IF::Context: FromRequest,
 {
+    actions: ActionsRegistryBuilder,
     app: AppConfigurer,
     conf: Option<AgentConf<C>>,
     initialisers: InitialiseHookVec<C>,
@@ -82,6 +88,7 @@ where
     pub fn build() -> Self {
         let shutdown = ShutdownManager::builder().watch_signal_with_default();
         Agent {
+            actions: ActionsRegistry::build(),
             app: AppConfigurer::default(),
             conf: None,
             initialisers: Default::default(),
@@ -145,8 +152,12 @@ where
 
         // Initialise agent globals.
         let store = Store::initialise(&telemetry.logger, &conf.store_path).await?;
-        let injector = Injector { store };
-        Injector::initialise(&telemetry.logger, injector.clone());
+        let injector = Injector {
+            actions: self.actions.finish(),
+            logger: telemetry.logger.clone(),
+            store,
+        };
+        Injector::initialise(injector.clone());
 
         // Run custom agent initialisation hooks.
         slog::debug!(telemetry.logger, "Running agent initialisation hooks");
@@ -170,11 +181,12 @@ where
         // Set up predefined agent endpoints.
         slog::debug!(telemetry.logger, "Configuring agent API endpoints");
         let mut app = self.app;
-        let logger = telemetry.logger.clone();
+        let api_logger = telemetry.logger.new(slog::o!("component" => "api"));
+        let app_injector = injector.clone();
         app.with_config(move |conf| {
-            let actions = ActionsService::build(logger.clone()).with_injector(&injector);
+            let actions = ActionsService::with_injector(&app_injector);
             let info = node_info.clone();
-            let info = info::into_actix_service(info, logger.clone());
+            let info = info::into_actix_service(info, api_logger.clone());
             let info = actix_web::web::scope("/api/unstable")
                 .service(info)
                 .service(actions);
@@ -188,6 +200,11 @@ where
             .metrics(options.requests_metrics_prefix, telemetry.metrics.clone())
             .run(Some(&telemetry.logger))?;
         let shutdown = shutdown.watch_actix(server, ());
+
+        // Spawn actions execution background tasks.
+        let executor = ActionsExecutor::with_injector(&injector);
+        let executor = executor.task(shutdown.shutdown_notification());
+        let shutdown = shutdown.watch_tokio(tokio::spawn(executor));
 
         // Complete shutdown setup and run the agent until an exit condition.
         let exit = shutdown.build();

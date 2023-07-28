@@ -12,6 +12,5 @@ CREATE TABLE IF NOT EXISTS actions(
   state_payload TEXT DEFAULT NULL,
   state_phase TEXT NOT NULL
 );
---CREATE INDEX actions_created_time ON actions(created_time);
-CREATE INDEX actions_finished_time ON actions(finished_time);
---CREATE INDEX actions_state_phase ON actions(state_phase);
+CREATE INDEX actions_queue ON actions(scheduled_time, finished_time);
+CREATE INDEX actions_ttl ON actions(finished_time);

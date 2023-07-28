@@ -25,10 +25,40 @@ const ACTION_GET_SQL: &str = r#"
     FROM actions
     WHERE id=?1;
 "#;
+const ACTION_NEXT_SQL: &str = r#"
+    SELECT
+        args,
+        created_time,
+        finished_time,
+        id,
+        kind,
+        metadata,
+        scheduled_time,
+        state_error,
+        state_payload,
+        state_phase,
+        CASE state_phase
+            WHEN '"RUNNING"' THEN 0
+            WHEN '"NEW"' THEN 1
+            ELSE 2
+        END AS phase_priority
+    FROM actions
+    WHERE finished_time IS NULL
+    ORDER BY phase_priority ASC, scheduled_time ASC, ROWID ASC
+    LIMIT 1;
+"#;
 const ACTION_PERSIST_SQL: &str = r#"
     INSERT INTO actions (
-        args, created_time, finished_time, id, kind, metadata, 
-        scheduled_time, state_error, state_payload, state_phase
+        args,
+        created_time,
+        finished_time,
+        id,
+        kind,
+        metadata, 
+        scheduled_time,
+        state_error,
+        state_payload,
+        state_phase
     )
     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
     ON CONFLICT(id)
@@ -61,6 +91,79 @@ const ACTIONS_QUEUE_SQL: &str = r#"
     -- There really should not be many running/pending actions on an agent.
     LIMIT 50;
 "#;
+
+/// [`ActionExecution`] row partially decoded from SQLite.
+struct ActionRow {
+    args: String,
+    created_time: String,
+    finished_time: Option<String>,
+    id: String,
+    kind: String,
+    metadata: String,
+    scheduled_time: String,
+    state_error: Option<String>,
+    state_payload: Option<String>,
+    state_phase: String,
+}
+
+impl<'a> TryFrom<&rusqlite::Row<'a>> for ActionRow {
+    type Error = rusqlite::Error;
+
+    fn try_from(row: &rusqlite::Row<'a>) -> std::result::Result<Self, Self::Error> {
+        let args: String = row.get("args")?;
+        let created_time: String = row.get("created_time")?;
+        let finished_time: Option<String> = row.get("finished_time")?;
+        let id: String = row.get("id")?;
+        let kind: String = row.get("kind")?;
+        let metadata: String = row.get("metadata")?;
+        let scheduled_time: String = row.get("scheduled_time")?;
+        let state_error: Option<String> = row.get("state_error")?;
+        let state_payload: Option<String> = row.get("state_payload")?;
+        let state_phase: String = row.get("state_phase")?;
+        Ok(Self {
+            args,
+            created_time,
+            finished_time,
+            id,
+            kind,
+            metadata,
+            scheduled_time,
+            state_error,
+            state_payload,
+            state_phase,
+        })
+    }
+}
+
+impl TryFrom<ActionRow> for ActionExecution {
+    type Error = anyhow::Error;
+    fn try_from(row: ActionRow) -> std::result::Result<Self, Self::Error> {
+        let args = encoding::decode_serde(&row.args)?;
+        let created_time = encoding::decode_time(&row.created_time)?;
+        let finished_time = encoding::decode_time_option(&row.finished_time)?;
+        let id = uuid::Uuid::parse_str(&row.id)?;
+        let metadata = encoding::decode_serde(&row.metadata)?;
+        let scheduled_time = encoding::decode_time(&row.scheduled_time)?;
+        let state_error = encoding::decode_serde_option(&row.state_error)?;
+        let state_payload = encoding::decode_serde_option(&row.state_payload)?;
+        let state_phase = encoding::decode_serde(&row.state_phase)?;
+        let action = ActionExecution {
+            args,
+            created_time,
+            finished_time,
+            id,
+            kind: row.kind,
+            metadata,
+            scheduled_time,
+            state: ActionExecutionState {
+                error: state_error,
+                payload: state_payload,
+                phase: state_phase,
+            },
+        };
+        Ok(action)
+    }
+}
 
 /// List [`ActionExecution`] summaries for finished actions.
 pub async fn finished(store: &Connection) -> Result<ActionExecutionList> {
@@ -103,28 +206,8 @@ pub async fn get(store: &Connection, id: uuid::Uuid) -> Result<Option<ActionExec
             let row = match rows.next()? {
                 None => None,
                 Some(row) => {
-                    let args: String = row.get("args")?;
-                    let created_time: String = row.get("created_time")?;
-                    let finished_time: Option<String> = row.get("finished_time")?;
-                    let id: String = row.get("id")?;
-                    let kind: String = row.get("kind")?;
-                    let metadata: String = row.get("metadata")?;
-                    let scheduled_time: String = row.get("scheduled_time")?;
-                    let state_error: Option<String> = row.get("state_error")?;
-                    let state_payload: Option<String> = row.get("state_payload")?;
-                    let state_phase: String = row.get("state_phase")?;
-                    Some((
-                        args,
-                        created_time,
-                        finished_time,
-                        id,
-                        kind,
-                        metadata,
-                        scheduled_time,
-                        state_error,
-                        state_payload,
-                        state_phase,
-                    ))
+                    let row = ActionRow::try_from(row)?;
+                    Some(row)
                 }
             };
             Ok(row)
@@ -132,37 +215,14 @@ pub async fn get(store: &Connection, id: uuid::Uuid) -> Result<Option<ActionExec
         .await
         .context(StatementError::QueryFailed)?;
 
-    // Return if there was action for the given ID.
-    let row = match row {
-        None => return Ok(None),
-        Some(row) => row,
-    };
-
-    // Decode the store record into an ActionExecution model.
-    let args = encoding::decode_serde(&row.0)?;
-    let created_time = encoding::decode_time(&row.1)?;
-    let finished_time = encoding::decode_time_option(&row.2)?;
-    let id = uuid::Uuid::parse_str(&row.3)?;
-    let metadata = encoding::decode_serde(&row.5)?;
-    let scheduled_time = encoding::decode_time(&row.6)?;
-    let state_error = encoding::decode_serde_option(&row.7)?;
-    let state_payload = encoding::decode_serde_option(&row.8)?;
-    let state_phase = encoding::decode_serde(&row.9)?;
-    let action = ActionExecution {
-        args,
-        created_time,
-        finished_time,
-        id,
-        kind: row.4,
-        metadata,
-        scheduled_time,
-        state: ActionExecutionState {
-            error: state_error,
-            payload: state_payload,
-            phase: state_phase,
-        },
-    };
-    Ok(Some(action))
+    // Decode the row into an action.
+    match row {
+        None => Ok(None),
+        Some(row) => {
+            let action = ActionExecution::try_from(row)?;
+            Ok(Some(action))
+        }
+    }
 }
 
 /// List [`ActionExecution`] summaries for unfinished actions.
@@ -192,6 +252,35 @@ pub async fn queue(store: &Connection) -> Result<ActionExecutionList> {
         actions.push(ActionExecutionListItem { kind, id, phase });
     }
     Ok(ActionExecutionList { actions })
+}
+
+/// Check the next action to execute, if any is pending.
+pub async fn next_to_execute(store: &Connection) -> Result<Option<ActionExecution>> {
+    // TODO(tracing): trace DB call.
+    // TODO(metrics): add DB call metrics.
+    let row = store
+        .call(|connection| {
+            let mut statement = connection.prepare_cached(ACTION_NEXT_SQL)?;
+            let mut rows = statement.query([])?;
+            match rows.next()? {
+                None => Ok(None),
+                Some(row) => {
+                    let row = ActionRow::try_from(row)?;
+                    Ok(Some(row))
+                }
+            }
+        })
+        .await
+        .context(StatementError::QueryFailed)?;
+
+    // Decode the row into an action.
+    match row {
+        None => Ok(None),
+        Some(row) => {
+            let action = ActionExecution::try_from(row)?;
+            Ok(Some(action))
+        }
+    }
 }
 
 /// Insert or update an [`ActionExecution`] record.
@@ -254,9 +343,15 @@ mod tests {
         assert_eq!(Some(action), actual);
     }
 
-    //#[tokio::test]
-    //async fn get_action_not_found() {
-    //}
+    #[tokio::test]
+    async fn get_action_not_found() {
+        let context = crate::agent::framework::DefaultContext::fixture();
+        let store = fixtures::store().await;
+        let id = ACTION_UUID_1;
+        let query = crate::agent::framework::store::query::Action { id };
+        let actual = store.query(&context, query).await.unwrap();
+        assert_eq!(None, actual);
+    }
 
     #[tokio::test]
     async fn query_actions_queue() {
@@ -288,6 +383,56 @@ mod tests {
         assert_eq!(actions.len(), 2);
         assert_eq!(actions[0].id, ACTION_UUID_2);
         assert_eq!(actions[1].id, ACTION_UUID_1);
+    }
+
+    #[tokio::test]
+    async fn next_action_new() {
+        let context = crate::agent::framework::DefaultContext::fixture();
+        let store = fixtures::store().await;
+
+        let action = fixtures::action(ACTION_UUID_1);
+        store.persist(&context, action).await.unwrap();
+        let action = fixtures::action(ACTION_UUID_2);
+        store.persist(&context, action).await.unwrap();
+        let action = fixtures::action(ACTION_UUID_3);
+        store.persist(&context, action).await.unwrap();
+
+        let query = super::super::super::query::ActionNextToExecute {};
+        let next = store.query(&context, query).await.unwrap().unwrap();
+        assert_eq!(next.id, ACTION_UUID_1);
+    }
+
+    #[tokio::test]
+    async fn next_action_none() {
+        let context = crate::agent::framework::DefaultContext::fixture();
+        let store = fixtures::store().await;
+
+        let query = super::super::super::query::ActionNextToExecute {};
+        let next = store.query(&context, query).await.unwrap();
+        assert_eq!(next, None);
+    }
+
+    #[tokio::test]
+    async fn next_action_running() {
+        let context = crate::agent::framework::DefaultContext::fixture();
+        let store = fixtures::store().await;
+
+        let action = fixtures::action(ACTION_UUID_1);
+        store.persist(&context, action).await.unwrap();
+        let mut action = fixtures::action(ACTION_UUID_2);
+        action.state.phase = ActionExecutionPhase::Running;
+        action.scheduled_time = time::OffsetDateTime::parse(
+            "2023-04-06T06:07:08Z",
+            &time::format_description::well_known::Rfc3339,
+        )
+        .unwrap();
+        store.persist(&context, action).await.unwrap();
+        let action = fixtures::action(ACTION_UUID_3);
+        store.persist(&context, action).await.unwrap();
+
+        let query = super::super::super::query::ActionNextToExecute {};
+        let next = store.query(&context, query).await.unwrap().unwrap();
+        assert_eq!(next.id, ACTION_UUID_2);
     }
 
     #[tokio::test]

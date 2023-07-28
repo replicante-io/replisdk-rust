@@ -44,6 +44,14 @@ pub struct ActionExecution {
     pub state: ActionExecutionState,
 }
 
+impl ActionExecution {
+    /// Finish the action by transitioning to the given state.
+    pub fn finish(&mut self, phase: ActionExecutionPhase) {
+        self.state.phase = phase;
+        self.finished_time = Some(time::OffsetDateTime::now_utc());
+    }
+}
+
 /// API response for lookups of lists of [`ActionExecution`]s records.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ActionExecutionList {
@@ -65,7 +73,7 @@ pub struct ActionExecutionListItem {
 }
 
 /// Phases of the action execution process.
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum ActionExecutionPhase {
     /// The action execution completed successfully.
     #[serde(rename = "DONE")]

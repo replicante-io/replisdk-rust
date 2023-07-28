@@ -157,7 +157,7 @@ impl ResponseStrategy {
         }
         if extended {
             let backtrace = error.source.backtrace().to_string();
-            if !backtrace.is_empty() {
+            if !backtrace.is_empty() && backtrace != crate::utils::BACKTRACE_DISABLED {
                 payload.insert("error_backtrace".into(), backtrace.into());
             }
         }

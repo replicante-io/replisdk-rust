@@ -41,6 +41,22 @@ impl From<Action> for QueryOps {
     }
 }
 
+/// Query the store for the next [`ActionExecution`] record to execute.
+///
+/// `ActionExecution`s are processed based on the time they were scheduled
+/// with a preference for already running actions.
+pub struct ActionNextToExecute {}
+impl SealQueryOp for ActionNextToExecute {}
+impl QueryOp for ActionNextToExecute {
+    type Response = Option<ActionExecution>;
+}
+
+impl From<ActionNextToExecute> for QueryOps {
+    fn from(_: ActionNextToExecute) -> Self {
+        QueryOps::ActionNextToExecute
+    }
+}
+
 /// Query the store for a list of finished [`ActionExecution`] records.
 ///
 /// [`ActionExecution`]: crate::agent::models::ActionExecution
@@ -83,6 +99,9 @@ mod sealed {
     pub enum QueryOps {
         /// Lookup an [`ActionExecution`] record by ID.
         Action(uuid::Uuid),
+
+        /// Query the store for the next [`ActionExecution`] record to execute.
+        ActionNextToExecute,
 
         /// List running and queued [`ActionExecution`] records.
         ActionsQueue,

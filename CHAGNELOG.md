@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 ### Added
+- Agent implementation framework: action execution.
 - Agent implementation framework: definition of store for agents to persist data into.
 - Agent implementation framework: node information trait.
 - Agent implementation framework: reusable process initialisation logic.
