@@ -7,7 +7,7 @@ use crate::agent::models::ActionExecutionPhase;
 
 /// Action logic to progress an [`ActionExecution`] record.
 #[async_trait::async_trait]
-pub trait ActionHandler: Send + Sync {
+pub trait ActionHandler: std::fmt::Debug + Send + Sync {
     /// Execute action specific logic to move an [`ActionExecution`] towards a final state.
     ///
     /// [`ActionExecution`] records track the current recorded state of an action
@@ -25,6 +25,9 @@ pub trait ActionHandler: Send + Sync {
     ///
     /// Retry of failed actions is NOT automatically handled so transient failures need
     /// to be handled by the implementation if needed.
+    ///
+    /// [`ActionExecutionState::error`]: crate::agent::models::ActionExecutionState::error
+    /// [`ActionExecutionState::phase`]: crate::agent::models::ActionExecutionState::phase
     async fn invoke(
         &self,
         context: &DefaultContext,
@@ -80,7 +83,7 @@ impl ActionHandlerChanges {
 }
 
 /// Describes how state data should be changed after an [`ActionHandler::invoke`] call.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub enum ActionHandlerChangeValue {
     /// Remove the current state data.
     Remove,

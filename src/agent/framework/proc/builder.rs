@@ -6,6 +6,7 @@ use anyhow::Result;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 
+use crate::agent::framework::actions::ActionMetadata;
 use crate::agent::framework::actions::ActionsExecutor;
 use crate::agent::framework::actions::ActionsRegistry;
 use crate::agent::framework::actions::ActionsRegistryBuilder;
@@ -114,6 +115,27 @@ where
     /// Set the agent programmatic options.
     pub fn options(mut self, options: AgentOptions) -> Self {
         self.options = Some(options);
+        self
+    }
+
+    /// Register metadata for handling of [`ActionExecution`] records.
+    ///
+    /// [`ActionExecution`]: crate::agent::models::ActionExecution
+    pub fn register_action(mut self, action: ActionMetadata) -> Self {
+        self.actions = self.actions.register(action);
+        self
+    }
+
+    /// Register metadata for handling of [`ActionExecution`] records.
+    ///
+    /// [`ActionExecution`]: crate::agent::models::ActionExecution
+    pub fn register_actions<I>(mut self, actions: I) -> Self
+    where
+        I: IntoIterator<Item = ActionMetadata>,
+    {
+        for action in actions {
+            self.actions = self.actions.register(action);
+        }
         self
     }
 

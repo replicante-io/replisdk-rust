@@ -6,17 +6,22 @@ use actix_web::web::Path;
 use actix_web::HttpResponse;
 use actix_web::Responder;
 
+use crate::agent::framework::actions::ActionsRegistry;
 use crate::agent::framework::store;
 use crate::agent::framework::DefaultContext;
 use crate::agent::framework::Injector;
 use crate::agent::models::ActionExecution;
 use crate::agent::models::ActionExecutionRequest;
 use crate::agent::models::ActionExecutionResponse;
+use crate::utils::actix::error::Error;
 use crate::utils::actix::error::Result;
 
 /// Register actions API endpoints as an [`actix_web`] service.
 #[derive(Clone, Debug)]
 pub struct ActionsService {
+    /// Catalogue of known action handlers.
+    actions: ActionsRegistry,
+
     /// The [`slog::Logger`] usable to make [`DefaultContext`](super::DefaultContext) instances.
     logger: slog::Logger,
 
@@ -29,6 +34,7 @@ impl ActionsService {
     pub fn with_injector(injector: &Injector) -> ActionsService {
         let logger = injector.logger.new(slog::o!("component" => "api"));
         ActionsService {
+            actions: injector.actions.clone(),
             logger,
             store: injector.store.clone(),
         }
@@ -86,7 +92,11 @@ pub async fn lookup(
 ) -> Result<impl Responder> {
     let query = store::query::Action::new(id.into_inner());
     let response = service.store.query(&context, query).await?;
-    Ok(HttpResponse::Ok().json(response))
+    let response = match response {
+        None => HttpResponse::NotFound().finish(),
+        Some(response) => HttpResponse::Ok().json(response),
+    };
+    Ok(response)
 }
 
 /// Query currently running and queued agent actions.
@@ -106,15 +116,16 @@ pub async fn schedule(
     action: actix_web::web::Json<ActionExecutionRequest>,
 ) -> Result<impl Responder> {
     // Validate request parameters.
-    // TODO: -> Check action kind is known.
+    //  -> Check action kind is known.
+    service
+        .actions
+        .lookup(&action.kind)
+        .map_err(|error| Error::with_status(actix_web::http::StatusCode::BAD_REQUEST, error))?;
     //  -> Check created time is in UTC.
     if let Some(created_time) = &action.created_time {
         if !created_time.offset().is_utc() {
             let error = anyhow::anyhow!("The provided created_time MUST be in UTC");
-            let error = crate::utils::actix::error::Error::with_status(
-                actix_web::http::StatusCode::BAD_REQUEST,
-                error,
-            );
+            let error = Error::with_status(actix_web::http::StatusCode::BAD_REQUEST, error);
             return Err(error);
         }
     }
@@ -188,6 +199,22 @@ mod tests {
         assert_eq!(response.status(), actix_web::http::StatusCode::OK);
         let body: ActionExecution = read_body_json(response).await;
         assert_eq!(body, action);
+    }
+
+    #[tokio::test]
+    async fn lookup_action_not_found() {
+        let injector = Injector::fixture().await;
+        let id = uuid::Uuid::new_v4();
+
+        let service = actions_service(&injector);
+        let app = actix_web::App::new().service(service);
+        let app = init_service(app).await;
+
+        let request = TestRequest::get()
+            .uri(&format!("/action/{}", id))
+            .to_request();
+        let response = call_service(&app, request).await;
+        assert_eq!(response.status(), actix_web::http::StatusCode::NOT_FOUND);
     }
 
     #[tokio::test]

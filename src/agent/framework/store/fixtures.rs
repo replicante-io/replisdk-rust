@@ -7,7 +7,7 @@ use crate::agent::models::ActionExecution;
 use crate::agent::models::ActionExecutionPhase;
 use crate::agent::models::ActionExecutionState;
 
-pub const ACTION_KIND: &str = "agent.replicante.io/test";
+pub const ACTION_KIND: &str = "agent.replicante.io/test.success";
 
 /// Create a new action with the given UUID.
 pub fn action(id: Uuid) -> ActionExecution {

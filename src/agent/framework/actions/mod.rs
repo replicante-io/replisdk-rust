@@ -8,6 +8,8 @@ mod executor;
 mod handler;
 mod registry;
 
+pub mod wellknown;
+
 pub(in crate::agent::framework) use executor::ActionsExecutor;
 pub(in crate::agent::framework) use handler::ActionHandlerChangeValue;
 

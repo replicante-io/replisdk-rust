@@ -66,8 +66,13 @@ impl Injector {
     #[cfg(test)]
     /// Initialise an injector to be used in tests.
     pub async fn fixture() -> Self {
+        let mut actions = ActionsRegistry::build();
+        for metadata in crate::agent::framework::actions::wellknown::tests() {
+            actions = actions.register(metadata);
+        }
+
         Self {
-            actions: ActionsRegistry::build().finish(),
+            actions: actions.finish(),
             logger: Logger::root(slog::Discard, slog::o!()),
             store: super::store::fixtures::store().await,
         }

@@ -50,6 +50,20 @@ impl ActionExecution {
         self.state.phase = phase;
         self.finished_time = Some(time::OffsetDateTime::now_utc());
     }
+
+    /// Update the [`ActionExecution`] phase and apply side effects.
+    ///
+    /// For final states (`Done` and `Failed`) this is equivalent to [`ActionExecution::finish`].
+    pub fn phase_to(&mut self, phase: ActionExecutionPhase) {
+        if matches!(
+            phase,
+            ActionExecutionPhase::Done | ActionExecutionPhase::Failed
+        ) {
+            self.finish(phase);
+            return;
+        }
+        self.state.phase = phase;
+    }
 }
 
 /// API response for lookups of lists of [`ActionExecution`]s records.

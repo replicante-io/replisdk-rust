@@ -102,7 +102,7 @@ impl ActionsExecutor {
         let mut action = action;
         let mut save = false;
         if changes.phase != action.state.phase {
-            action.state.phase = changes.phase;
+            action.phase_to(changes.phase);
             save = true;
         }
         match changes.error {
@@ -170,6 +170,7 @@ mod tests {
     const ACTION_KIND_RESET: &str = "agent.replicante.io/test.reset";
     const ACTION_KIND_UPDATE: &str = "agent.replicante.io/test.update";
 
+    #[derive(Debug)]
     pub struct DoneAction;
     #[async_trait::async_trait]
     impl ActionHandler for DoneAction {
@@ -178,6 +179,7 @@ mod tests {
         }
     }
 
+    #[derive(Debug)]
     pub struct FailAction;
     #[async_trait::async_trait]
     impl ActionHandler for FailAction {
@@ -186,6 +188,7 @@ mod tests {
         }
     }
 
+    #[derive(Debug)]
     pub struct LoopAction;
     #[async_trait::async_trait]
     impl ActionHandler for LoopAction {
@@ -194,6 +197,7 @@ mod tests {
         }
     }
 
+    #[derive(Debug)]
     pub struct ResetAction;
     #[async_trait::async_trait]
     impl ActionHandler for ResetAction {
@@ -205,6 +209,7 @@ mod tests {
         }
     }
 
+    #[derive(Debug)]
     pub struct UpdateAction;
     #[async_trait::async_trait]
     impl ActionHandler for UpdateAction {
@@ -429,7 +434,7 @@ mod tests {
         assert_eq!(
             error,
             serde_json::json!({
-                "error_msg": "metadata for action agent.replicante.io/test not found",
+                "error_msg": "metadata for action agent.replicante.io/test.success not found",
             })
         );
     }

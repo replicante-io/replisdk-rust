@@ -4,7 +4,7 @@ version = "0.1.1"
 description = "Experimental features and additions to the Repicante SDK for rust"
 
 edition = "2021"
-rust-version = "1.66"
+rust-version = "1.67"
 
 homepage = "https://replicante.io"
 license = "MIT"

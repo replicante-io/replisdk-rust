@@ -10,6 +10,7 @@ use super::ActionHandler;
 const REPLICANTE_DOMAINS: [&str; 1] = ["replicante.io"];
 
 /// Metadata attached to action implementations.
+#[derive(Debug)]
 pub struct ActionMetadata {
     /// Identifier of the action implementation.
     pub(in crate::agent::framework) kind: String,
@@ -18,15 +19,6 @@ pub struct ActionMetadata {
 
     /// [`ActionHandler`] to invoke for [`ActionExecution`] with matching `kind`.
     pub(in crate::agent::framework) handler: Box<dyn ActionHandler>,
-}
-
-impl std::fmt::Debug for ActionMetadata {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ActionMetadata")
-            .field("kind", &self.kind)
-            .field("handler", &"{ActionHandler}")
-            .finish()
-    }
 }
 
 impl ActionMetadata {
@@ -165,6 +157,7 @@ mod tests {
     use crate::agent::framework::DefaultContext;
     use crate::agent::models::ActionExecution;
 
+    #[derive(Debug)]
     struct TestNoop {}
     #[async_trait::async_trait]
     impl ActionHandler for TestNoop {

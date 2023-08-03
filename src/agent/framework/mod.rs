@@ -50,13 +50,42 @@
 //!
 //! ## Implementing actions
 //!
-//! TODO: provide well defined action impls
+//! Action implementations are registered during process initialisation with
+//! [`Agent::register_action`] or [`Agent::register_actions`].
 //!
-//! TODO: provide custom action impls
+//! These methods expect [`ActionMetadata`], which is composed of required action kind
+//! and handling logic, to register actions with the agent framework.
+//!
+//! ### Well Known actions
+//!
+//! The agent specification defines some actions standard actions agent may or must provide.
+//! These actions have an agreed upon contract and all agents must implement to match.
+//!
+//! For example the `agent.replicante.io/cluster.init` action must initialise a new cluster
+//! configuration on the instance it is run on.
+//! What cluster initialisation means is dependent on the store but the outcome is the same for all.
+//!
+//! To define well known action implementations you must provide an [`ActionHandler`]
+//! implementation to the correct function in the [`actions::wellknown`] module.
+//! These functions return the appropriate [`ActionMetadata`] object to register the action with.
+//!
+//! ### Custom actions
+//!
+//! For all other actions provided by the agent a custom [`ActionMetadata`] object
+//! must be defined by the implementation.
+//!
+//! Custom [`ActionMetadata`] require:
+//!
+//! - An action `kind`: to identify the action itself.
+//!   Custom actions cannot use kinds in the `replicante.io` namespace.
+//! - An action `handler`: any type implementing the [`ActionHandler`] trait.
 //!
 //! ## Examples
 //!
-//! TODO: link to repositories implementing agents.
+//! The best examples are probably existing agents implemented with the SDK.
+//! Below is a non-exclusive list of example repositories (in alphabetical order):
+//!
+//! - MongoDB Agent: <https://github.com/replicante-io/repliagent-mongodb>.
 //!
 //! Overall an agent setup may look like the snipped below.
 //!
@@ -69,13 +98,17 @@
 //!     .watch_task(background::custom_worker_task(...))
 //!     .watch_task(background::store_monitor_task(...))
 //!     .register_action(actions::custom(...))
-//!     .register_action(actions::cluster::init(...))
-//!     .register_action(actions::cluster::join(...))
+//!     .register_action(crate::agent::framework::actions::wellknown::cluster::init(...))
+//!     .register_action(crate::agent::framework::actions::wellknown::cluster::join(...))
 //!
 //!     // Once the agent is configured we can run it forever.
 //!     .run()
 //!     .await
 //! ```
+//!
+//! [`ActionHandler`]: crate::agent::framework::actions::ActionHandler
+//! [`ActionMetadata`]: crate::agent::framework::actions::ActionMetadata
+//! [`actions::wellknown`] crate::agent::framework::actions::wellknown
 use std::future::Ready;
 
 use actix_web::web::Data;
