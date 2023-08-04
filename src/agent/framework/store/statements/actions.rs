@@ -73,6 +73,11 @@ const ACTION_PERSIST_SQL: &str = r#"
         state_phase=?10
     ;
 "#;
+const ACTIONS_CLEAN_FINISHED_SQL: &str = r#"
+    DELETE FROM actions
+    WHERE finished_time IS NOT NULL
+        AND finished_time <= ?1;
+"#;
 const ACTIONS_FINISHED_SQL: &str = r#"
     SELECT kind, id, state_phase
     FROM actions
@@ -96,11 +101,11 @@ const ACTIONS_QUEUE_SQL: &str = r#"
 struct ActionRow {
     args: String,
     created_time: String,
-    finished_time: Option<String>,
+    finished_time: Option<f64>,
     id: String,
     kind: String,
     metadata: String,
-    scheduled_time: String,
+    scheduled_time: f64,
     state_error: Option<String>,
     state_payload: Option<String>,
     state_phase: String,
@@ -112,11 +117,11 @@ impl<'a> TryFrom<&rusqlite::Row<'a>> for ActionRow {
     fn try_from(row: &rusqlite::Row<'a>) -> std::result::Result<Self, Self::Error> {
         let args: String = row.get("args")?;
         let created_time: String = row.get("created_time")?;
-        let finished_time: Option<String> = row.get("finished_time")?;
+        let finished_time: Option<f64> = row.get("finished_time")?;
         let id: String = row.get("id")?;
         let kind: String = row.get("kind")?;
         let metadata: String = row.get("metadata")?;
-        let scheduled_time: String = row.get("scheduled_time")?;
+        let scheduled_time: f64 = row.get("scheduled_time")?;
         let state_error: Option<String> = row.get("state_error")?;
         let state_payload: Option<String> = row.get("state_payload")?;
         let state_phase: String = row.get("state_phase")?;
@@ -140,10 +145,10 @@ impl TryFrom<ActionRow> for ActionExecution {
     fn try_from(row: ActionRow) -> std::result::Result<Self, Self::Error> {
         let args = encoding::decode_serde(&row.args)?;
         let created_time = encoding::decode_time(&row.created_time)?;
-        let finished_time = encoding::decode_time_option(&row.finished_time)?;
+        let finished_time = encoding::decode_time_option_f64(row.finished_time)?;
         let id = uuid::Uuid::parse_str(&row.id)?;
         let metadata = encoding::decode_serde(&row.metadata)?;
-        let scheduled_time = encoding::decode_time(&row.scheduled_time)?;
+        let scheduled_time = encoding::decode_time_f64(row.scheduled_time)?;
         let state_error = encoding::decode_serde_option(&row.state_error)?;
         let state_payload = encoding::decode_serde_option(&row.state_payload)?;
         let state_phase = encoding::decode_serde(&row.state_phase)?;
@@ -163,6 +168,20 @@ impl TryFrom<ActionRow> for ActionExecution {
         };
         Ok(action)
     }
+}
+
+/// Clean [`ActionExecution`] records for actions finished prior to to the given time.
+pub async fn clean(store: &Connection, age: time::OffsetDateTime) -> Result<()> {
+    // TODO(tracing): trace DB call.
+    // TODO(metrics): add DB call metrics.
+    let age = encoding::encode_time_f64(age)?;
+    store
+        .call(move |connection| {
+            let removed = connection.execute(ACTIONS_CLEAN_FINISHED_SQL, rusqlite::params![age])?;
+            Ok(removed)
+        })
+        .await?;
+    Ok(())
 }
 
 /// List [`ActionExecution`] summaries for finished actions.
@@ -288,9 +307,9 @@ pub async fn persist(store: &Connection, action: ActionExecution) -> Result<()> 
     // Serialise special types into stings for the DB.
     let args = encoding::encode_serde(&action.args)?;
     let created_time = encoding::encode_time(action.created_time)?;
-    let finished_time = encoding::encode_time_option(action.finished_time)?;
+    let finished_time = encoding::encode_time_option_f64(action.finished_time)?;
     let metadata = encoding::encode_serde(&action.metadata)?;
-    let scheduled_time = encoding::encode_time(action.scheduled_time)?;
+    let scheduled_time = encoding::encode_time_f64(action.scheduled_time)?;
     let state_error = encoding::encode_serde_option(&action.state.error)?;
     let state_payload = encoding::encode_serde_option(&action.state.payload)?;
     let state_phase = encoding::encode_serde(&action.state.phase)?;

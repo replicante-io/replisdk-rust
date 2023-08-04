@@ -3,11 +3,14 @@
 CREATE TABLE IF NOT EXISTS actions(
   id TEXT PRIMARY KEY NOT NULL,
   args TEXT NOT NULL,
-  created_time INTEGER NOT NULL,
-  finished_time INTEGER DEFAULT NULL,
+  -- Created time is not queried on so use TEXT to preserve precision.
+  created_time TEXT NOT NULL,
+  -- Finished time is sorted and queried on so use REAL for SQLite to operate on it correctly.
+  finished_time REAL DEFAULT NULL,
   kind TEXT NOT NULL,
   metadata TEXT NOT NULL,
-  scheduled_time INTEGER NOT NULL,
+  -- Scheduled time is queried on so use REAL for SQLite to operate on it correctly.
+  scheduled_time REAL NOT NULL,
   state_error TEXT DEFAULT NULL,
   state_payload TEXT DEFAULT NULL,
   state_phase TEXT NOT NULL

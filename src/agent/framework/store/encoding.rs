@@ -5,6 +5,9 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use time::OffsetDateTime;
 
+/// Convert nanoseconds from/to u32 to the fractal portion of f64.
+const NANO_SEC_UNIT: f64 = 1_000_000_000.0;
+
 #[derive(Debug, thiserror::Error)]
 pub enum EncodeError {
     /// Unable to encode structured data as a JSON string.
@@ -53,13 +56,29 @@ pub fn decode_time(value: &str) -> Result<OffsetDateTime> {
         .map_err(anyhow::Error::from)
 }
 
-/// Decode an [`OffsetDateTime`](time::OffsetDateTime) from an RFC3339 string.
-pub fn decode_time_option(value: &Option<String>) -> Result<Option<OffsetDateTime>> {
+/// Decode an [`OffsetDateTime`](time::OffsetDateTime) from an f64.
+///
+/// The f64 value encodes:
+///
+/// - The unix timestamp in seconds as the integer part.
+/// - The nanosecond portion of the time as the fractal part.
+pub fn decode_time_f64(value: f64) -> Result<OffsetDateTime> {
+    let unix = value.floor() as i64;
+    let nanos = (value.fract() * NANO_SEC_UNIT) as u32;
+    let time = OffsetDateTime::from_unix_timestamp(unix)?;
+    let time = time.replace_nanosecond(nanos)?;
+    Ok(time)
+}
+
+/// Decode an optional [`OffsetDateTime`](time::OffsetDateTime) from an f64.
+///
+/// The encoded f64 follows the format described in [`decode_time_f64`].
+pub fn decode_time_option_f64(value: Option<f64>) -> Result<Option<OffsetDateTime>> {
     let value = match value {
         None => return Ok(None),
         Some(value) => value,
     };
-    decode_time(value).map(Some)
+    decode_time_f64(value).map(Some)
 }
 
 /// Encode a [`serde`] serialisable type into a string.
@@ -92,11 +111,56 @@ pub fn encode_time(value: OffsetDateTime) -> Result<String> {
         .map_err(anyhow::Error::from)
 }
 
-/// Encode an optional [`OffsetDateTime`](time::OffsetDateTime) into an RFC3339 string.
-pub fn encode_time_option(value: Option<OffsetDateTime>) -> Result<Option<String>> {
+/// Encode an [`OffsetDateTime`](time::OffsetDateTime) into an f64.
+///
+/// The encoded f64 follows the format described in [`decode_time_f64`].
+pub fn encode_time_f64(value: OffsetDateTime) -> Result<f64> {
+    let unix = value.unix_timestamp() as f64;
+    let nanos = f64::from(value.nanosecond());
+    Ok(unix + (nanos / NANO_SEC_UNIT))
+}
+
+/// Encode an optional [`OffsetDateTime`](time::OffsetDateTime) into an f64.
+///
+/// The encoded f64 follows the format described in [`decode_time_f64`].
+pub fn encode_time_option_f64(value: Option<OffsetDateTime>) -> Result<Option<f64>> {
     let value = match value {
         None => return Ok(None),
         Some(value) => value,
     };
-    encode_time(value).map(Some)
+    encode_time_f64(value).map(Some)
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn decode_time_f64() {
+        let time = 1680670808.12345;
+        let time = super::decode_time_f64(time).unwrap();
+        let expected = time::OffsetDateTime::parse(
+            "2023-04-05T05:00:08.12345004Z",
+            &time::format_description::well_known::Rfc3339,
+        )
+        .unwrap();
+        assert_eq!(expected, time);
+    }
+
+    #[test]
+    fn encode_time_f64() {
+        let time = time::OffsetDateTime::parse(
+            "2023-04-05T05:00:08.12345Z",
+            &time::format_description::well_known::Rfc3339,
+        )
+        .unwrap();
+        let time = super::encode_time_f64(time).unwrap();
+        assert_eq!(time, 1680670808.12345);
+    }
+
+    #[test]
+    fn ensure_idempotency() {
+        let expected = 1680670808.12345;
+        let time = super::decode_time_f64(expected).unwrap();
+        let time = super::encode_time_f64(time).unwrap();
+        assert_eq!(expected, time);
+    }
 }

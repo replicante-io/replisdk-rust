@@ -7,10 +7,12 @@ use anyhow::Result;
 use slog::Logger;
 use tokio_rusqlite::Connection;
 
+mod cleaner;
 mod encoding;
 mod schema;
 mod statements;
 
+pub mod manage;
 pub mod persist;
 pub mod query;
 
@@ -19,6 +21,11 @@ pub(super) mod fixtures;
 #[cfg(test)]
 mod tests;
 
+pub use self::cleaner::StoreClean;
+
+use self::manage::ManageOp;
+use self::manage::ManageOps;
+use self::manage::ManageResponses;
 use self::persist::PersistOp;
 use self::persist::PersistOps;
 use self::persist::PersistResponses;
@@ -78,6 +85,42 @@ impl Store {
         Ok(Store { store })
     }
 
+    /// Perform management actions on the store.
+    ///
+    /// The supported management actions are defined in the [`manage`] module
+    /// and determine the return type.
+    pub async fn manage<O>(&self, _context: &DefaultContext, op: O) -> Result<O::Response>
+    where
+        O: ManageOp,
+    {
+        let op = op.into();
+        let response = match op {
+            ManageOps::CleanActions(age) => statements::actions::clean(&self.store, age)
+                .await
+                .map(|_| ManageResponses::Success),
+        };
+        response.map(O::Response::from)
+    }
+
+    /// Persist records to the agent store.
+    ///
+    /// The supported persist operations are defined in the [`persist`] module and
+    /// determine the return type.
+    pub async fn persist<O>(&self, _context: &DefaultContext, op: O) -> Result<O::Response>
+    where
+        O: PersistOp,
+    {
+        let op = op.into();
+        let response = match op {
+            PersistOps::ActionExecution(action) => {
+                statements::actions::persist(&self.store, action)
+                    .await
+                    .map(|_| PersistResponses::Success)
+            }
+        };
+        response.map(O::Response::from)
+    }
+
     /// Query records from the agent store.
     ///
     /// The supported query operations are defined in the [`query`] module and
@@ -100,25 +143,6 @@ impl Store {
             QueryOps::ActionsQueue => statements::actions::queue(&self.store)
                 .await
                 .map(QueryResponses::ActionsList),
-        };
-        response.map(O::Response::from)
-    }
-
-    /// Persist records to the agent store.
-    ///
-    /// The supported persist operations are defined in the [`persist`] module and
-    /// determine the return type.
-    pub async fn persist<O>(&self, _context: &DefaultContext, op: O) -> Result<O::Response>
-    where
-        O: PersistOp,
-    {
-        let op = op.into();
-        let response = match op {
-            PersistOps::ActionExecution(action) => {
-                statements::actions::persist(&self.store, action)
-                    .await
-                    .map(|_| PersistResponses::Success)
-            }
         };
         response.map(O::Response::from)
     }

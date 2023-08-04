@@ -13,6 +13,7 @@ use crate::agent::framework::actions::ActionsRegistryBuilder;
 use crate::agent::framework::actions::ActionsService;
 use crate::agent::framework::info;
 use crate::agent::framework::store::Store;
+use crate::agent::framework::store::StoreClean;
 use crate::agent::framework::AgentConf;
 use crate::agent::framework::AgentOptions;
 use crate::agent::framework::Injector;
@@ -223,10 +224,15 @@ where
             .run(Some(&telemetry.logger))?;
         let shutdown = shutdown.watch_actix(server, ());
 
-        // Spawn actions execution background tasks.
+        // Spawn actions execution background task.
         let executor = ActionsExecutor::with_injector(&injector);
         let executor = executor.task(shutdown.shutdown_notification());
         let shutdown = shutdown.watch_tokio(tokio::spawn(executor));
+
+        // Spawn store cleaner background task.
+        let cleaner = StoreClean::with_injector(&injector);
+        let cleaner = cleaner.task(shutdown.shutdown_notification());
+        let shutdown = shutdown.watch_tokio(tokio::spawn(cleaner));
 
         // Complete shutdown setup and run the agent until an exit condition.
         let exit = shutdown.build();

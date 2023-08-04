@@ -23,6 +23,11 @@ impl SealQueryOp for Action {}
 impl QueryOp for Action {
     type Response = Option<ActionExecution>;
 }
+impl From<Action> for QueryOps {
+    fn from(value: Action) -> Self {
+        QueryOps::Action(value.id)
+    }
+}
 
 impl Action {
     /// Query for the [`ActionExecution`] record with the given ID.
@@ -35,12 +40,6 @@ impl Action {
     }
 }
 
-impl From<Action> for QueryOps {
-    fn from(value: Action) -> Self {
-        QueryOps::Action(value.id)
-    }
-}
-
 /// Query the store for the next [`ActionExecution`] record to execute.
 ///
 /// `ActionExecution`s are processed based on the time they were scheduled
@@ -50,7 +49,6 @@ impl SealQueryOp for ActionNextToExecute {}
 impl QueryOp for ActionNextToExecute {
     type Response = Option<ActionExecution>;
 }
-
 impl From<ActionNextToExecute> for QueryOps {
     fn from(_: ActionNextToExecute) -> Self {
         QueryOps::ActionNextToExecute
@@ -65,7 +63,6 @@ impl SealQueryOp for ActionsFinished {}
 impl QueryOp for ActionsFinished {
     type Response = ActionExecutionList;
 }
-
 impl From<ActionsFinished> for QueryOps {
     fn from(_: ActionsFinished) -> Self {
         QueryOps::ActionsFinished
@@ -80,7 +77,6 @@ impl SealQueryOp for ActionsQueue {}
 impl QueryOp for ActionsQueue {
     type Response = ActionExecutionList;
 }
-
 impl From<ActionsQueue> for QueryOps {
     fn from(_: ActionsQueue) -> Self {
         QueryOps::ActionsQueue
