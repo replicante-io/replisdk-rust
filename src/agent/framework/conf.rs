@@ -8,12 +8,38 @@ use crate::runtime::shutdown::DEFAULT_SHUTDOWN_GRACE_TIMEOUT;
 use crate::runtime::telemetry::TelemetryConfig;
 use crate::runtime::tokio_conf::TokioRuntimeConf;
 
+/// Tune actions handling configuration.
+#[derive(Clone, Default, Debug, Serialize, Deserialize)]
+pub struct ActionsConfig {
+    /// Number of days a finished actions is kept by the store clean process.
+    #[serde(default = "ActionsConfig::default_clean_age")]
+    pub clean_age: u32,
+
+    /// Seconds to pause between action execution cycles.
+    #[serde(default = "ActionsConfig::default_execute_interval")]
+    pub execute_interval: u64,
+}
+
+impl ActionsConfig {
+    fn default_clean_age() -> u32 {
+        14
+    }
+
+    fn default_execute_interval() -> u64 {
+        10
+    }
+}
+
 /// Container for the complete agent configuration.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AgentConf<C>
 where
     C: Clone + std::fmt::Debug + Serialize + DeserializeOwned,
 {
+    /// Tune actions handling configuration.
+    #[serde(default)]
+    pub actions: ActionsConfig,
+
     /// Agent configuration specific to the implementation.
     #[serde(flatten, deserialize_with = "C::deserialize")]
     pub custom: C,
@@ -48,12 +74,31 @@ where
 {
     fn default() -> Self {
         AgentConf {
+            actions: Default::default(),
             custom: Default::default(),
             http: Default::default(),
             node_id: None,
             runtime: Default::default(),
             store_path: AgentConf::<C>::default_store_path(),
             telemetry: Default::default(),
+        }
+    }
+}
+
+impl<C> AgentConf<C>
+where
+    C: Clone + std::fmt::Debug + Serialize + DeserializeOwned,
+{
+    /// Discard the agent custom configuration and return a known type for use in the framework.
+    pub(in crate::agent::framework) fn erase_custom(&self) -> AgentConf<()> {
+        AgentConf {
+            actions: self.actions.clone(),
+            custom: (),
+            http: self.http.clone(),
+            node_id: self.node_id.clone(),
+            runtime: self.runtime.clone(),
+            store_path: self.store_path.clone(),
+            telemetry: self.telemetry.clone(),
         }
     }
 }

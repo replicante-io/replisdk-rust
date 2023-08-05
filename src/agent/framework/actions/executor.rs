@@ -15,11 +15,10 @@ use crate::agent::models::ActionExecution;
 use crate::agent::models::ActionExecutionPhase;
 use crate::utils::error::slog::ErrorAttributes;
 
-const EXECUTE_DELAY: Duration = Duration::from_secs(10);
-
 /// Background worker to execute agent actions.
 pub struct ActionsExecutor {
     context: DefaultContext,
+    interval: Duration,
     registry: ActionsRegistry,
     store: Store,
 }
@@ -50,7 +49,7 @@ impl ActionsExecutor {
 
             // Sleep until the next cycle or shutdown.
             tokio::select! {
-                _ = tokio::time::sleep(EXECUTE_DELAY) => {},
+                _ = tokio::time::sleep(self.interval) => {},
                 _ = &mut shutdown => {
                     slog::debug!(self.context.logger, "Gracefully shutting down actions executor");
                     return Ok(());
@@ -66,8 +65,10 @@ impl ActionsExecutor {
                 .logger
                 .new(slog::o!("component" => "actions-executor")),
         };
+        let interval = injector.config.actions.execute_interval;
         ActionsExecutor {
             context,
+            interval: Duration::from_secs(interval),
             registry: injector.actions.clone(),
             store: injector.store.clone(),
         }

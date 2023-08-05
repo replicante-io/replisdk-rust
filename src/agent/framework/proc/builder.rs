@@ -177,6 +177,7 @@ where
         let store = Store::initialise(&telemetry.logger, &conf.store_path).await?;
         let injector = Injector {
             actions: self.actions.finish(),
+            config: conf.erase_custom(),
             logger: telemetry.logger.clone(),
             store,
         };

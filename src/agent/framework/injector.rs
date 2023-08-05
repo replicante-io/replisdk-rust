@@ -6,6 +6,7 @@ use slog::Logger;
 
 use super::actions::ActionsRegistry;
 use super::store::Store;
+use super::AgentConf;
 
 /// Singleton instance of the Process Globals container.
 static GLOBAL_INJECTOR: Lazy<RwLock<Option<Injector>>> = Lazy::new(|| RwLock::new(None));
@@ -15,6 +16,12 @@ static GLOBAL_INJECTOR: Lazy<RwLock<Option<Injector>>> = Lazy::new(|| RwLock::ne
 pub struct Injector {
     /// Registry of available action implementation for the agent.
     pub actions: ActionsRegistry,
+
+    /// Configuration for the agent framework.
+    ///
+    /// This configuration is stripped of its type parameter to enable easy reference
+    /// from the singleton pattern.
+    pub config: AgentConf<()>,
 
     /// Global logger for the process.
     pub logger: Logger,
@@ -73,6 +80,7 @@ impl Injector {
 
         Self {
             actions: actions.finish(),
+            config: Default::default(),
             logger: Logger::root(slog::Discard, slog::o!()),
             store: super::store::fixtures::store().await,
         }

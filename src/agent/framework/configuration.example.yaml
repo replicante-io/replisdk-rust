@@ -1,6 +1,14 @@
 ---
 # <Agent specific options are part of the root object>
 
+# Tune actions handling configuration.
+actions:
+  # Number of days a finished actions is kept by the store clean process.
+  clean_age: 14
+
+  # Seconds to pause between action execution cycles.
+  execute_interval: 10
+
 # Agent HTTP Server interface configuration.
 http:
   # Sets the maximum number of pending connections.

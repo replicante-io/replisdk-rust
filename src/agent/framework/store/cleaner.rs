@@ -11,6 +11,7 @@ use crate::agent::framework::Injector;
 use crate::utils::error::slog::ErrorAttributes;
 
 const EXECUTE_DELAY: Duration = Duration::from_secs(10);
+const SECS_IN_A_DAY: u32 = 24 * 60 * 60;
 
 /// Background task to periodically clean the agent store.
 ///
@@ -21,6 +22,7 @@ const EXECUTE_DELAY: Duration = Duration::from_secs(10);
 ///
 /// - Finished actions are removed after the configured amount of time.
 pub struct StoreClean {
+    clean_age: Duration,
     context: DefaultContext,
     store: Store,
 }
@@ -58,12 +60,15 @@ impl StoreClean {
 
     /// Initialise a [`StoreClean`] with dependencies from the given [`Injector`].
     pub fn with_injector(injector: &Injector) -> StoreClean {
+        let clean_age = injector.config.actions.clean_age * SECS_IN_A_DAY;
+        let clean_age = Duration::from_secs(u64::from(clean_age));
         let context = DefaultContext {
             logger: injector
                 .logger
                 .new(slog::o!("component" => "store-cleaner")),
         };
         StoreClean {
+            clean_age,
             context,
             store: injector.store.clone(),
         }
@@ -73,9 +78,7 @@ impl StoreClean {
 impl StoreClean {
     /// Perform a round of cleaning duties.
     async fn task_loop(&self) -> Result<()> {
-        // TODO: make age configurable.
-        let age = Duration::from_secs(14 * 24 * 3600);
-        let expire = time::OffsetDateTime::now_utc() - age;
+        let expire = time::OffsetDateTime::now_utc() - self.clean_age;
         let expire = manage::CleanActions::since(expire);
         self.store.manage(&self.context, expire).await
     }
@@ -101,7 +104,8 @@ mod tests {
     impl Fixtures {
         async fn default() -> Fixtures {
             let context = DefaultContext::fixture();
-            let injector = Injector::fixture().await;
+            let mut injector = Injector::fixture().await;
+            injector.config.actions.clean_age = 1;
             Fixtures { context, injector }
         }
 
@@ -131,13 +135,21 @@ mod tests {
                 .await
                 .expect("sql actions count failed")
         }
+
+        fn old_age() -> OffsetDateTime {
+            OffsetDateTime::now_utc() - Duration::from_secs(u64::from(2 * super::SECS_IN_A_DAY))
+        }
+
+        fn recent_age() -> OffsetDateTime {
+            OffsetDateTime::now_utc() - Duration::from_secs(30)
+        }
     }
 
     #[tokio::test]
     async fn clean_actions() {
         let fixtures = Fixtures::default().await;
-        let recent = OffsetDateTime::now_utc() - Duration::from_secs(30);
-        let old = OffsetDateTime::now_utc() - Duration::from_secs(15 * 24 * 60 * 60);
+        let recent = Fixtures::recent_age();
+        let old = Fixtures::old_age();
         fixtures
             .add_action(ActionExecutionPhase::Running, None)
             .await;
@@ -157,7 +169,7 @@ mod tests {
     #[tokio::test]
     async fn clean_actions_nothing_to_do() {
         let fixtures = Fixtures::default().await;
-        let recent = OffsetDateTime::now_utc() - Duration::from_secs(30);
+        let recent = Fixtures::recent_age();
         fixtures.add_action(ActionExecutionPhase::New, None).await;
         fixtures
             .add_action(ActionExecutionPhase::Running, None)
