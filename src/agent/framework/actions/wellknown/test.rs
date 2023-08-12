@@ -98,6 +98,18 @@ impl ActionHandler for Success {
     }
 }
 
+/// Collection of actions metadata for the `agent.replicnate.io/test.*` group.
+///
+/// Register actions during agent initialisation with
+///
+/// ```ignore
+/// Agent::build()
+///     .register_actions(crate::agent::framework::actions::wellknown::test::all())
+/// ```
+pub fn all() -> impl IntoIterator<Item = ActionMetadata> {
+    [Fail::metadata(), Loop::metadata(), Success::metadata()]
+}
+
 #[cfg(test)]
 mod tests {
     use crate::agent::framework::actions::ActionHandlerChangeValue;

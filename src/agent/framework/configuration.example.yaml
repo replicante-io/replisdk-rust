@@ -149,7 +149,7 @@ telemetry:
     #
     # Valid options are the same as the level field.
     levels:
-      # For example you can disable request logs while preserving .
+      # For example you can disable request info logs for HTTP requests only.
       "actix_web::middleware::logger": warning
 
     # Select how logs are emitted by the process.

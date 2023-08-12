@@ -9,7 +9,7 @@ use crate::runtime::telemetry::TelemetryConfig;
 use crate::runtime::tokio_conf::TokioRuntimeConf;
 
 /// Tune actions handling configuration.
-#[derive(Clone, Default, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ActionsConfig {
     /// Number of days a finished actions is kept by the store clean process.
     #[serde(default = "ActionsConfig::default_clean_age")]
@@ -18,6 +18,15 @@ pub struct ActionsConfig {
     /// Seconds to pause between action execution cycles.
     #[serde(default = "ActionsConfig::default_execute_interval")]
     pub execute_interval: u64,
+}
+
+impl Default for ActionsConfig {
+    fn default() -> Self {
+        ActionsConfig {
+            clean_age: Self::default_clean_age(),
+            execute_interval: Self::default_execute_interval(),
+        }
+    }
 }
 
 impl ActionsConfig {

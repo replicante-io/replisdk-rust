@@ -74,7 +74,7 @@ impl Injector {
     /// Initialise an injector to be used in tests.
     pub async fn fixture() -> Self {
         let mut actions = ActionsRegistry::build();
-        for metadata in crate::agent::framework::actions::wellknown::tests() {
+        for metadata in crate::agent::framework::actions::wellknown::test::all() {
             actions = actions.register(metadata);
         }
 
