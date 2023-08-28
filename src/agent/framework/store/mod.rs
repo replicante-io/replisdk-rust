@@ -32,7 +32,7 @@ use self::persist::PersistResponses;
 use self::query::QueryOp;
 use self::query::QueryOps;
 use self::query::QueryResponses;
-use crate::agent::framework::DefaultContext;
+use crate::context::Context;
 
 /// Special path requesting the use of an in-memory store.
 pub const MEMORY_PATH: &str = ":memory:";
@@ -89,7 +89,7 @@ impl Store {
     ///
     /// The supported management actions are defined in the [`manage`] module
     /// and determine the return type.
-    pub async fn manage<O>(&self, _context: &DefaultContext, op: O) -> Result<O::Response>
+    pub async fn manage<O>(&self, _: &Context, op: O) -> Result<O::Response>
     where
         O: ManageOp,
     {
@@ -106,7 +106,7 @@ impl Store {
     ///
     /// The supported persist operations are defined in the [`persist`] module and
     /// determine the return type.
-    pub async fn persist<O>(&self, _context: &DefaultContext, op: O) -> Result<O::Response>
+    pub async fn persist<O>(&self, _: &Context, op: O) -> Result<O::Response>
     where
         O: PersistOp,
     {
@@ -125,7 +125,7 @@ impl Store {
     ///
     /// The supported query operations are defined in the [`query`] module and
     /// determine the return type.
-    pub async fn query<O>(&self, _context: &DefaultContext, op: O) -> Result<O::Response>
+    pub async fn query<O>(&self, _: &Context, op: O) -> Result<O::Response>
     where
         O: QueryOp,
     {

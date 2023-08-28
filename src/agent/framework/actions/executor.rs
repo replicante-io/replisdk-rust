@@ -4,20 +4,23 @@ use std::time::Duration;
 
 use anyhow::Error;
 use anyhow::Result;
+use opentelemetry_api::trace::FutureExt;
 
 use crate::agent::framework::actions::ActionHandlerChangeValue;
 use crate::agent::framework::actions::ActionsRegistry;
+use crate::agent::framework::metrics::action;
 use crate::agent::framework::store::query::ActionNextToExecute;
 use crate::agent::framework::store::Store;
-use crate::agent::framework::DefaultContext;
 use crate::agent::framework::Injector;
 use crate::agent::models::ActionExecution;
 use crate::agent::models::ActionExecutionPhase;
+use crate::context::Context;
 use crate::utils::error::slog::ErrorAttributes;
+use crate::utils::trace::TraceFutureErrExt;
 
 /// Background worker to execute agent actions.
 pub struct ActionsExecutor {
-    context: DefaultContext,
+    context: Context,
     interval: Duration,
     registry: ActionsRegistry,
     store: Store,
@@ -31,20 +34,27 @@ impl ActionsExecutor {
     {
         tokio::pin!(shutdown);
         slog::debug!(self.context.logger, "Starting actions execution");
+        let tracer = crate::agent::framework::trace::tracer();
 
         loop {
+            // Create a root span to trace activities of this loop.
+            let context = crate::utils::trace::root(&tracer, "action.executor");
+            let _timer = action::EXECUTE_LOOPS_DURATION.start_timer();
+
             // Look for next action to execute and invoke its handler.
             let action = self
                 .store
                 .query(&self.context, ActionNextToExecute {})
+                .trace_on_err_with_status()
+                .with_context(context)
                 .await;
             if let Err(error) = self.task_loop(action).await {
+                action::EXECUTE_LOOPS_ERROR.inc();
                 slog::error!(
                     self.context.logger,
                     "Actions execution loop did not complete successfully";
                     ErrorAttributes::from(&error)
                 );
-                // TODO(metrics): count errors.
             }
 
             // Sleep until the next cycle or shutdown.
@@ -60,11 +70,11 @@ impl ActionsExecutor {
 
     /// Initialise an [`ActionsExecutor`] with dependencies from the given [`Injector`].
     pub fn with_injector(injector: &Injector) -> Self {
-        let context = DefaultContext {
-            logger: injector
-                .logger
-                .new(slog::o!("component" => "actions-executor")),
-        };
+        let context = injector
+            .context
+            .derive()
+            .log_values(slog::o!("component" => "actions-executor"))
+            .build();
         let interval = injector.config.actions.execute_interval;
         ActionsExecutor {
             context,
@@ -82,6 +92,7 @@ impl ActionsExecutor {
             None => return Ok(()),
             Some(action) => action,
         };
+        action::EXECUTE_LOOPS_BUSY.inc();
 
         // Lookup the action handler and invoke it.
         let metadata = match self.registry.lookup(&action.kind) {
@@ -143,6 +154,7 @@ impl ActionsExecutor {
 
     /// Fail the action due to an error during handling or invocation.
     async fn fail_action(&self, mut action: ActionExecution, error: Error) -> Result<()> {
+        action::FAILED.inc();
         action.state.error = Some(crate::utils::error::into_json(error));
         action.finish(ActionExecutionPhase::Failed);
         self.store.persist(&self.context, action).await
@@ -154,7 +166,6 @@ mod tests {
     use anyhow::Result;
 
     use super::ActionsExecutor;
-    use super::DefaultContext;
     use crate::agent::framework::actions::ActionHandler;
     use crate::agent::framework::actions::ActionHandlerChanges as Changes;
     use crate::agent::framework::actions::ActionMetadata;
@@ -164,6 +175,7 @@ mod tests {
     use crate::agent::framework::Injector;
     use crate::agent::models::ActionExecution;
     use crate::agent::models::ActionExecutionPhase;
+    use crate::context::Context;
 
     const ACTION_KIND_DONE: &str = "agent.replicante.io/test.done";
     const ACTION_KIND_FAIL: &str = "agent.replicante.io/test.fail";
@@ -175,7 +187,7 @@ mod tests {
     pub struct DoneAction;
     #[async_trait::async_trait]
     impl ActionHandler for DoneAction {
-        async fn invoke(&self, _: &DefaultContext, _: &ActionExecution) -> Result<Changes> {
+        async fn invoke(&self, _: &Context, _: &ActionExecution) -> Result<Changes> {
             Ok(Changes::to(ActionExecutionPhase::Done))
         }
     }
@@ -184,7 +196,7 @@ mod tests {
     pub struct FailAction;
     #[async_trait::async_trait]
     impl ActionHandler for FailAction {
-        async fn invoke(&self, _: &DefaultContext, _: &ActionExecution) -> Result<Changes> {
+        async fn invoke(&self, _: &Context, _: &ActionExecution) -> Result<Changes> {
             anyhow::bail!(anyhow::anyhow!("test action to always fail"));
         }
     }
@@ -193,7 +205,7 @@ mod tests {
     pub struct LoopAction;
     #[async_trait::async_trait]
     impl ActionHandler for LoopAction {
-        async fn invoke(&self, _: &DefaultContext, action: &ActionExecution) -> Result<Changes> {
+        async fn invoke(&self, _: &Context, action: &ActionExecution) -> Result<Changes> {
             Ok(Changes::to(action.state.phase))
         }
     }
@@ -202,7 +214,7 @@ mod tests {
     pub struct ResetAction;
     #[async_trait::async_trait]
     impl ActionHandler for ResetAction {
-        async fn invoke(&self, _: &DefaultContext, _: &ActionExecution) -> Result<Changes> {
+        async fn invoke(&self, _: &Context, _: &ActionExecution) -> Result<Changes> {
             let changes = Changes::to(ActionExecutionPhase::Done)
                 .error(None)
                 .payload(None);
@@ -214,7 +226,7 @@ mod tests {
     pub struct UpdateAction;
     #[async_trait::async_trait]
     impl ActionHandler for UpdateAction {
-        async fn invoke(&self, _: &DefaultContext, _: &ActionExecution) -> Result<Changes> {
+        async fn invoke(&self, _: &Context, _: &ActionExecution) -> Result<Changes> {
             let changes = Changes::to(ActionExecutionPhase::Done)
                 .error(serde_json::json!({ "changed": true }))
                 .payload(serde_json::json!({ "result": 42 }));
@@ -224,7 +236,7 @@ mod tests {
 
     struct Fixtures {
         action: ActionExecution,
-        context: DefaultContext,
+        context: Context,
         executor: ActionsExecutor,
         injector: Injector,
     }
@@ -245,7 +257,7 @@ mod tests {
         {
             let id = uuid::Uuid::new_v4();
             let action = configure_action(fixtures::action(id));
-            let context = DefaultContext::fixture();
+            let context = Context::fixture();
             let mut injector = Injector::fixture().await;
 
             injector

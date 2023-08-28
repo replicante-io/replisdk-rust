@@ -1,14 +1,19 @@
 //! Implementation of the actions portion of the store interface.
 use anyhow::Context;
 use anyhow::Result;
+use opentelemetry_api::trace::FutureExt;
 use tokio_rusqlite::Connection;
 
 use super::StatementError;
+use crate::agent::framework::metrics;
 use crate::agent::framework::store::encoding;
 use crate::agent::models::ActionExecution;
 use crate::agent::models::ActionExecutionList;
 use crate::agent::models::ActionExecutionListItem;
 use crate::agent::models::ActionExecutionState;
+use crate::utils::metrics::CountErrExt;
+use crate::utils::metrics::CountFutureErrExt;
+use crate::utils::trace::TraceFutureStdErrExt;
 
 const ACTION_GET_SQL: &str = r#"
     SELECT
@@ -172,22 +177,25 @@ impl TryFrom<ActionRow> for ActionExecution {
 
 /// Clean [`ActionExecution`] records for actions finished prior to to the given time.
 pub async fn clean(store: &Connection, age: time::OffsetDateTime) -> Result<()> {
-    // TODO(tracing): trace DB call.
-    // TODO(metrics): add DB call metrics.
-    let age = encoding::encode_time_f64(age)?;
+    let (err_count, _timer) = metrics::store::observe_op("actions.clean");
+    let trace = crate::agent::framework::trace::store_op_context("actions.clean");
+    let age = encoding::encode_time_f64(age).count_on_err(err_count.clone())?;
     store
         .call(move |connection| {
             let removed = connection.execute(ACTIONS_CLEAN_FINISHED_SQL, rusqlite::params![age])?;
             Ok(removed)
         })
+        .count_on_err(err_count)
+        .trace_on_err_with_status()
+        .with_context(trace)
         .await?;
     Ok(())
 }
 
 /// List [`ActionExecution`] summaries for finished actions.
 pub async fn finished(store: &Connection) -> Result<ActionExecutionList> {
-    // TODO(tracing): trace DB call.
-    // TODO(metrics): add DB call metrics.
+    let (err_count, _timer) = metrics::store::observe_op("actions.finished");
+    let trace = crate::agent::framework::trace::store_op_context("actions.finished");
     let rows = store
         .call(|connection| {
             let mut statement = connection.prepare_cached(ACTIONS_FINISHED_SQL)?;
@@ -201,6 +209,9 @@ pub async fn finished(store: &Connection) -> Result<ActionExecutionList> {
             }
             Ok(queue)
         })
+        .count_on_err(err_count)
+        .trace_on_err_with_status()
+        .with_context(trace)
         .await
         .context(StatementError::QueryFailed)?;
 
@@ -216,8 +227,8 @@ pub async fn finished(store: &Connection) -> Result<ActionExecutionList> {
 /// Lookup an [`ActionExecution`] record by ID from the store.
 pub async fn get(store: &Connection, id: uuid::Uuid) -> Result<Option<ActionExecution>> {
     // Query the store for an action record.
-    // TODO(tracing): trace DB call.
-    // TODO(metrics): add DB call metrics.
+    let (err_count, _timer) = metrics::store::observe_op("actions.get");
+    let trace = crate::agent::framework::trace::store_op_context("actions.get");
     let row = store
         .call(move |connection| {
             let mut statement = connection.prepare_cached(ACTION_GET_SQL)?;
@@ -231,6 +242,9 @@ pub async fn get(store: &Connection, id: uuid::Uuid) -> Result<Option<ActionExec
             };
             Ok(row)
         })
+        .count_on_err(err_count)
+        .trace_on_err_with_status()
+        .with_context(trace)
         .await
         .context(StatementError::QueryFailed)?;
 
@@ -246,8 +260,8 @@ pub async fn get(store: &Connection, id: uuid::Uuid) -> Result<Option<ActionExec
 
 /// List [`ActionExecution`] summaries for unfinished actions.
 pub async fn queue(store: &Connection) -> Result<ActionExecutionList> {
-    // TODO(tracing): trace DB call.
-    // TODO(metrics): add DB call metrics.
+    let (err_count, _timer) = metrics::store::observe_op("actions.queue");
+    let trace = crate::agent::framework::trace::store_op_context("actions.queue");
     let rows = store
         .call(|connection| {
             let mut statement = connection.prepare_cached(ACTIONS_QUEUE_SQL)?;
@@ -261,6 +275,9 @@ pub async fn queue(store: &Connection) -> Result<ActionExecutionList> {
             }
             Ok(queue)
         })
+        .count_on_err(err_count)
+        .trace_on_err_with_status()
+        .with_context(trace)
         .await
         .context(StatementError::QueryFailed)?;
 
@@ -275,8 +292,8 @@ pub async fn queue(store: &Connection) -> Result<ActionExecutionList> {
 
 /// Check the next action to execute, if any is pending.
 pub async fn next_to_execute(store: &Connection) -> Result<Option<ActionExecution>> {
-    // TODO(tracing): trace DB call.
-    // TODO(metrics): add DB call metrics.
+    let (err_count, _timer) = metrics::store::observe_op("actions.next_to_execute");
+    let trace = crate::agent::framework::trace::store_op_context("actions.next_to_execute");
     let row = store
         .call(|connection| {
             let mut statement = connection.prepare_cached(ACTION_NEXT_SQL)?;
@@ -289,6 +306,9 @@ pub async fn next_to_execute(store: &Connection) -> Result<Option<ActionExecutio
                 }
             }
         })
+        .count_on_err(err_count)
+        .trace_on_err_with_status()
+        .with_context(trace)
         .await
         .context(StatementError::QueryFailed)?;
 
@@ -315,8 +335,8 @@ pub async fn persist(store: &Connection, action: ActionExecution) -> Result<()> 
     let state_phase = encoding::encode_serde(&action.state.phase)?;
 
     // Execute the insert statement.
-    // TODO(tracing): trace DB call.
-    // TODO(metrics): add DB call metrics.
+    let (err_count, _timer) = metrics::store::observe_op("actions.persist");
+    let trace = crate::agent::framework::trace::store_op_context("actions.persist");
     store
         .call(move |connection| {
             connection.execute(
@@ -336,6 +356,9 @@ pub async fn persist(store: &Connection, action: ActionExecution) -> Result<()> 
             )?;
             Ok(())
         })
+        .count_on_err(err_count)
+        .trace_on_err_with_status()
+        .with_context(trace)
         .await?;
     Ok(())
 }
@@ -344,6 +367,7 @@ pub async fn persist(store: &Connection, action: ActionExecution) -> Result<()> 
 mod tests {
     use crate::agent::framework::store::fixtures;
     use crate::agent::models::ActionExecutionPhase;
+    use crate::context::Context;
 
     const ACTION_UUID_1: uuid::Uuid = uuid::uuid!("67e55044-10b1-426f-9247-bb680e5fe0c8");
     const ACTION_UUID_2: uuid::Uuid = uuid::uuid!("cb4995fc-c62d-41ca-9e66-156f357e2df1");
@@ -351,7 +375,7 @@ mod tests {
 
     #[tokio::test]
     async fn get_action() {
-        let context = crate::agent::framework::DefaultContext::fixture();
+        let context = Context::fixture();
         let store = fixtures::store().await;
         let action = fixtures::action(ACTION_UUID_1);
         store.persist(&context, action.clone()).await.unwrap();
@@ -364,7 +388,7 @@ mod tests {
 
     #[tokio::test]
     async fn get_action_not_found() {
-        let context = crate::agent::framework::DefaultContext::fixture();
+        let context = Context::fixture();
         let store = fixtures::store().await;
         let id = ACTION_UUID_1;
         let query = crate::agent::framework::store::query::Action { id };
@@ -375,7 +399,7 @@ mod tests {
     #[tokio::test]
     async fn query_actions_queue() {
         // Store actions to build a queue.
-        let context = crate::agent::framework::DefaultContext::fixture();
+        let context = Context::fixture();
         let store = fixtures::store().await;
 
         let action = fixtures::action(ACTION_UUID_1);
@@ -406,7 +430,7 @@ mod tests {
 
     #[tokio::test]
     async fn next_action_new() {
-        let context = crate::agent::framework::DefaultContext::fixture();
+        let context = Context::fixture();
         let store = fixtures::store().await;
 
         let action = fixtures::action(ACTION_UUID_1);
@@ -423,7 +447,7 @@ mod tests {
 
     #[tokio::test]
     async fn next_action_none() {
-        let context = crate::agent::framework::DefaultContext::fixture();
+        let context = Context::fixture();
         let store = fixtures::store().await;
 
         let query = super::super::super::query::ActionNextToExecute {};
@@ -433,7 +457,7 @@ mod tests {
 
     #[tokio::test]
     async fn next_action_running() {
-        let context = crate::agent::framework::DefaultContext::fixture();
+        let context = Context::fixture();
         let store = fixtures::store().await;
 
         let action = fixtures::action(ACTION_UUID_1);
@@ -458,7 +482,7 @@ mod tests {
     async fn persist_action_execution() {
         // Store an action.
         let action = fixtures::action(ACTION_UUID_1);
-        let context = crate::agent::framework::DefaultContext::fixture();
+        let context = Context::fixture();
         let store = fixtures::store().await;
         store.persist(&context, action).await.unwrap();
 
@@ -479,7 +503,7 @@ mod tests {
     async fn persist_action_execution_update_existing() {
         // Store an action.
         let action = fixtures::action(ACTION_UUID_1);
-        let context = crate::agent::framework::DefaultContext::fixture();
+        let context = Context::fixture();
         let store = fixtures::store().await;
         store.persist(&context, action.clone()).await.unwrap();
 

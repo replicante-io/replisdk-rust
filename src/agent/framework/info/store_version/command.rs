@@ -1,7 +1,7 @@
 //! Execute a command to detect the store version.
 use std::collections::BTreeMap;
 
-use anyhow::Context;
+use anyhow::Context as AnyContext;
 use anyhow::Result;
 use serde::Deserialize;
 use serde::Serialize;
@@ -9,8 +9,8 @@ use tokio::process::Command;
 
 use super::DecodeFn;
 use super::StoreVersionStrategy;
-use crate::agent::framework::DefaultContext;
 use crate::agent::models::StoreVersion;
+use crate::context::Context;
 
 /// Execute a command to detect the store version.
 ///
@@ -52,7 +52,7 @@ impl StoreVersionCommand {
 
 #[async_trait::async_trait]
 impl StoreVersionStrategy for StoreVersionCommand {
-    async fn version(&self, context: &DefaultContext) -> Result<StoreVersion> {
+    async fn version(&self, context: &Context) -> Result<StoreVersion> {
         let mut command = Command::new(&self.exec);
         command.args(self.args.iter()).envs(self.env.iter());
         let output = command
@@ -146,6 +146,7 @@ mod tests {
     use super::StoreVersionCommand;
     use super::StoreVersionStrategy;
     use crate::agent::models::StoreVersion;
+    use crate::context::Context;
 
     fn custom_decode(_: Vec<u8>) -> Result<StoreVersion> {
         Ok(StoreVersion {
@@ -157,7 +158,7 @@ mod tests {
 
     #[tokio::test]
     async fn custom_decode_fn() {
-        let context = crate::agent::framework::DefaultContext::fixture();
+        let context = Context::fixture();
         let command = StoreVersionCommand::build("echo")
             .arg("custom")
             .decode(custom_decode)
@@ -170,7 +171,7 @@ mod tests {
 
     #[tokio::test]
     async fn default_decode_yaml() {
-        let context = crate::agent::framework::DefaultContext::fixture();
+        let context = Context::fixture();
         let command = StoreVersionCommand::build("echo")
             .arg(r#"{"checkout": "c", "extra": "e", "number": "x.y.z"}"#)
             .finish();

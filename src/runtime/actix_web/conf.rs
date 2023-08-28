@@ -15,9 +15,7 @@ use openssl::ssl::SslVerifyMode;
 use serde::Deserialize;
 use serde::Serialize;
 
-use super::AppConfigurer;
 use super::BuildError;
-use super::OpinionatedBuilder;
 
 /// User focused configuration options for [`HttpServer`]s.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -185,22 +183,6 @@ impl ServerConfig {
         };
         let server = server.with_context(|| BuildError::Bind(self.bind))?;
         Ok(server)
-    }
-
-    /// Build a [`Server`] instance with the standard configuration applied.
-    ///
-    /// The focus of opinionated builds is to avoid as much logic as possible in applications.
-    /// To achieve this, choices are made in the builder that may limit otherwise possible options.
-    ///
-    /// [`Server`]: actix_web::dev::Server
-    pub fn opinionated(self, app: AppConfigurer) -> OpinionatedBuilder {
-        OpinionatedBuilder {
-            app,
-            conf: self,
-            metrics_path: "/metrics",
-            metrics_prefix: None,
-            metrics_registry: None,
-        }
     }
 }
 

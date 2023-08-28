@@ -4,7 +4,7 @@ version = "0.1.1"
 description = "All in one SDK to develop Replicante ecosystem components in Rust"
 
 edition = "2021"
-rust-version = "1.67"
+rust-version = "1.68"
 
 homepage = "https://replicante.io"
 license = "MIT"
@@ -30,6 +30,8 @@ agent-framework = [
   "async-trait",
   "once_cell",
   "openssl",
+  "opentelemetry_api",
+  "prometheus",
   "refinery",
   "rusqlite",
   "serde_yaml",
@@ -42,6 +44,7 @@ agent-framework = [
   "tokio/time",
 
   "agent-models",
+  "context",
   "runtime-actix_builder",
   "runtime-shutdown",
   "runtime-shutdown_actix",
@@ -49,9 +52,15 @@ agent-framework = [
   "utils-actix_error",
   "utils-error_json",
   "utils-error_slog",
+  "utils-metrics",
+  "utils-trace",
 ]
 # Enable definitions of agent data models.
 agent-models = ["serde", "serde_json", "time", "uuid"]
+
+## Context features
+# Enable a general purpose container to carry scoped values around.
+context = ["slog"]
 
 ## Platform features
 # Enable all platform related features.
@@ -76,6 +85,7 @@ runtime-actix_builder = [
   "actix-http",
   "actix-service",
   "actix-web",
+  "actix-web-opentelemetry",
   "anyhow",
   "serde",
   "slog",
@@ -94,6 +104,7 @@ runtime-telemetry = [
   "anyhow",
   "opentelemetry",
   "opentelemetry-otlp",
+  "opentelemetry-semantic-conventions",
   "prometheus",
   "sentry",
   "serde",
@@ -105,9 +116,15 @@ runtime-telemetry = [
   "slog-stdlog",
   "slog-term",
   "thiserror",
+
+  "utils-error_slog",
 ]
 # Enable tokio runtime configuration utilities.
 runtime-tokio_conf = ["tokio"]
+
+## Testing features
+# Enable test fixtures defined by other features.
+test-fixtrue = []
 
 ## Various utilities and common tasks.
 # Provides an `actix_web` error type that works with `anyhow::Error`.
@@ -118,19 +135,27 @@ utils-actix_metrics = ["actix-web", "futures-util", "prometheus", "utils-actix_e
 utils-error_json = ["anyhow", "serde_json"]
 # Provides a standard way to log errors as slog key/value pairs.
 utils-error_slog = ["anyhow", "slog"]
+# Utilities to introspect applications and libraries with metrics more easley.
+utils-metrics = ["prometheus"]
+# Utilities to introspect applications and libraries with traces more easley.
+utils-trace = ["anyhow", "opentelemetry_api", "pin-project-lite"]
 
 [dependencies]
 actix-http = { version = "^3.0", optional = true }
 actix-service = { version = "^2.0", optional = true }
 actix-web = { version = "^4.3", optional = true }
+actix-web-opentelemetry = { version = "^0.15", optional = true, features = ["sync-middleware"] }
 anyhow = { version = "^1.0", features = ["backtrace"], optional = true }
 async-trait = { version = "^0.1", optional = true }
 futures = { version = "^0.3", optional = true }
 futures-util = { version = "^0.3", optional = true }
 once_cell = { version = "^1.18", optional = true }
 openssl = { version = "^0.10", optional = true }
-opentelemetry = { version = "^0.19", optional = true, features = ["rt-tokio"] }
-opentelemetry-otlp = { version = "^0.12", optional = true }
+opentelemetry = { version = "^0.20", optional = true, features = ["rt-tokio"] }
+opentelemetry_api = { version = "^0.20", optional = true }
+opentelemetry-otlp = { version = "^0.13", optional = true }
+opentelemetry-semantic-conventions = { version = "^0.12", optional = true }
+pin-project-lite = { version = "^0.2", optional = true }
 prometheus = { version = "^0.13", optional = true, features = ["process"] }
 refinery = { version = "^0.8", optional = true, features = ["rusqlite"] }
 rusqlite = { version = "^0.29", optional = true, features = ["bundled"] }

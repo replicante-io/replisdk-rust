@@ -154,14 +154,14 @@ mod tests {
     use super::ActionHandler;
     use super::ActionMetadata;
     use super::ActionsRegistry;
-    use crate::agent::framework::DefaultContext;
     use crate::agent::models::ActionExecution;
+    use crate::context::Context;
 
     #[derive(Debug)]
     struct TestNoop {}
     #[async_trait::async_trait]
     impl ActionHandler for TestNoop {
-        async fn invoke(&self, _: &DefaultContext, action: &ActionExecution) -> Result<Changes> {
+        async fn invoke(&self, _: &Context, action: &ActionExecution) -> Result<Changes> {
             Ok(Changes::to(action.state.phase))
         }
     }

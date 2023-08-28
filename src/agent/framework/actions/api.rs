@@ -8,11 +8,11 @@ use actix_web::Responder;
 
 use crate::agent::framework::actions::ActionsRegistry;
 use crate::agent::framework::store;
-use crate::agent::framework::DefaultContext;
 use crate::agent::framework::Injector;
 use crate::agent::models::ActionExecution;
 use crate::agent::models::ActionExecutionRequest;
 use crate::agent::models::ActionExecutionResponse;
+use crate::context::Context;
 use crate::utils::actix::error::Error;
 use crate::utils::actix::error::Result;
 
@@ -22,9 +22,6 @@ pub struct ActionsService {
     /// Catalogue of known action handlers.
     actions: ActionsRegistry,
 
-    /// The [`slog::Logger`] usable to make [`DefaultContext`](super::DefaultContext) instances.
-    logger: slog::Logger,
-
     /// Interface to the agent persisted store.
     store: store::Store,
 }
@@ -32,10 +29,8 @@ pub struct ActionsService {
 impl ActionsService {
     /// Initialise an [`ActionsService`] with dependencies from the given [`Injector`].
     pub fn with_injector(injector: &Injector) -> ActionsService {
-        let logger = injector.logger.new(slog::o!("component" => "api"));
         ActionsService {
             actions: injector.actions.clone(),
-            logger,
             store: injector.store.clone(),
         }
     }
@@ -46,7 +41,6 @@ impl HttpServiceFactory for ActionsService {
         let service = self.clone();
         actix_web::web::scope("/actions")
             .app_data(Data::new(service.clone()))
-            .app_data(Data::new(self.logger.clone()))
             .service(
                 actix_web::web::resource("/finished")
                     .guard(actix_web::guard::Get())
@@ -60,7 +54,6 @@ impl HttpServiceFactory for ActionsService {
             .register(config);
         actix_web::web::scope("/action")
             .app_data(Data::new(service))
-            .app_data(Data::new(self.logger))
             .service(
                 actix_web::web::resource("/{action_id}")
                     .guard(actix_web::guard::Get())
@@ -76,10 +69,7 @@ impl HttpServiceFactory for ActionsService {
 }
 
 /// Query already finished agent actions.
-pub async fn finished(
-    service: Data<ActionsService>,
-    context: DefaultContext,
-) -> Result<impl Responder> {
+pub async fn finished(service: Data<ActionsService>, context: Context) -> Result<impl Responder> {
     let query = store::query::ActionsFinished {};
     let response = service.store.query(&context, query).await?;
     Ok(HttpResponse::Ok().json(response))
@@ -87,7 +77,7 @@ pub async fn finished(
 
 pub async fn lookup(
     service: Data<ActionsService>,
-    context: DefaultContext,
+    context: Context,
     id: Path<uuid::Uuid>,
 ) -> Result<impl Responder> {
     let query = store::query::Action::new(id.into_inner());
@@ -100,10 +90,7 @@ pub async fn lookup(
 }
 
 /// Query currently running and queued agent actions.
-pub async fn queue(
-    service: Data<ActionsService>,
-    context: DefaultContext,
-) -> Result<impl Responder> {
+pub async fn queue(service: Data<ActionsService>, context: Context) -> Result<impl Responder> {
     let query = store::query::ActionsQueue {};
     let response = service.store.query(&context, query).await?;
     Ok(HttpResponse::Ok().json(response))
@@ -112,7 +99,7 @@ pub async fn queue(
 /// Schedule a new action to run on the agent.
 pub async fn schedule(
     service: Data<ActionsService>,
-    context: DefaultContext,
+    context: Context,
     action: actix_web::web::Json<ActionExecutionRequest>,
 ) -> Result<impl Responder> {
     // Validate request parameters.
@@ -145,6 +132,7 @@ mod tests {
     use actix_web::test::TestRequest;
 
     use super::ActionsService;
+    use crate::agent::framework::tests::actix_app;
     use crate::agent::framework::Injector;
     use crate::agent::models::ActionExecution;
     use crate::agent::models::ActionExecutionList;
@@ -159,12 +147,12 @@ mod tests {
     async fn finished_actions() {
         let injector = Injector::fixture().await;
         let service = actions_service(&injector);
-        let app = actix_web::App::new().service(service);
+        let app = actix_app().service(service);
         let app = init_service(app).await;
 
         let mut action = super::store::fixtures::action(uuid::Uuid::new_v4());
         action.finished_time = Some(time::OffsetDateTime::now_utc());
-        let context = super::DefaultContext::fixture();
+        let context = super::Context::fixture();
         injector.store.persist(&context, action).await.unwrap();
 
         let request = TestRequest::get().uri("/actions/finished").to_request();
@@ -180,7 +168,7 @@ mod tests {
         let injector = Injector::fixture().await;
         let id = uuid::Uuid::new_v4();
         let action = super::store::fixtures::action(id);
-        let context = super::DefaultContext::fixture();
+        let context = super::Context::fixture();
         injector
             .store
             .persist(&context, action.clone())
@@ -188,7 +176,7 @@ mod tests {
             .unwrap();
 
         let service = actions_service(&injector);
-        let app = actix_web::App::new().service(service);
+        let app = actix_app().service(service);
         let app = init_service(app).await;
 
         let request = TestRequest::get()
@@ -207,7 +195,7 @@ mod tests {
         let id = uuid::Uuid::new_v4();
 
         let service = actions_service(&injector);
-        let app = actix_web::App::new().service(service);
+        let app = actix_app().service(service);
         let app = init_service(app).await;
 
         let request = TestRequest::get()
@@ -221,11 +209,11 @@ mod tests {
     async fn queued_actions() {
         let injector = Injector::fixture().await;
         let service = actions_service(&injector);
-        let app = actix_web::App::new().service(service);
+        let app = actix_app().service(service);
         let app = init_service(app).await;
 
         let action = super::store::fixtures::action(uuid::Uuid::new_v4());
-        let context = super::DefaultContext::fixture();
+        let context = super::Context::fixture();
         injector.store.persist(&context, action).await.unwrap();
 
         let request = TestRequest::get().uri("/actions/queue").to_request();
@@ -240,7 +228,7 @@ mod tests {
     async fn schedule_action() {
         let injector = Injector::fixture().await;
         let service = actions_service(&injector);
-        let app = actix_web::App::new().service(service);
+        let app = actix_app().service(service);
         let app = init_service(app).await;
 
         let id = uuid::Uuid::new_v4();
@@ -266,7 +254,7 @@ mod tests {
     async fn schedule_action_created_in_utc() {
         let injector = Injector::fixture().await;
         let service = actions_service(&injector);
-        let app = actix_web::App::new().service(service);
+        let app = actix_app().service(service);
         let app = init_service(app).await;
 
         let created_time =
@@ -287,5 +275,26 @@ mod tests {
         assert_eq!(response.status(), actix_web::http::StatusCode::BAD_REQUEST);
     }
 
-    // TODO: schedule_action_kind_not_known
+    #[tokio::test]
+    async fn schedule_action_kind_not_known() {
+        let injector = Injector::fixture().await;
+        let service = actions_service(&injector);
+        let app = actix_app().service(service);
+        let app = init_service(app).await;
+
+        let request = ActionExecutionRequest {
+            args: Default::default(),
+            created_time: None,
+            id: None,
+            kind: "not.a/real.action".to_string(),
+            metadata: Default::default(),
+        };
+        let request = TestRequest::post()
+            .uri("/action")
+            .set_json(request)
+            .to_request();
+        let response = call_service(&app, request).await;
+
+        assert_eq!(response.status(), actix_web::http::StatusCode::BAD_REQUEST);
+    }
 }

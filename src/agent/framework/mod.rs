@@ -109,22 +109,19 @@
 //! [`ActionHandler`]: crate::agent::framework::actions::ActionHandler
 //! [`ActionMetadata`]: crate::agent::framework::actions::ActionMetadata
 //! [`actions::wellknown`] crate::agent::framework::actions::wellknown
-use std::future::Ready;
-
-use actix_web::web::Data;
-use actix_web::Error;
-use actix_web::FromRequest;
-use actix_web::HttpRequest;
-use slog::Logger;
-
 mod conf;
 mod info;
 mod injector;
+mod metrics;
 mod node_id;
 mod proc;
+mod trace;
 
 pub mod actions;
 pub mod store;
+
+#[cfg(test)]
+mod tests;
 
 pub use self::conf::AgentConf;
 pub use self::conf::AgentOptions;
@@ -145,34 +142,3 @@ pub use self::proc::InitialiseHook;
 pub use self::proc::InitialiseHookArgs;
 pub use self::proc::NodeInfoFactory;
 pub use self::proc::NodeInfoFactoryArgs;
-
-/// Default additional context for [`NodeInfo`] implementations.
-///
-/// When using custom contexts you can still reuse the default logic by embedding this
-/// struct as a field to your custom context type.
-pub struct DefaultContext {
-    /// Contextual logger to be used by the operation.
-    pub logger: Logger,
-}
-
-impl FromRequest for DefaultContext {
-    type Error = Error;
-    type Future = Ready<std::result::Result<Self, Self::Error>>;
-
-    fn from_request(req: &HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
-        let logger = req
-            .app_data::<Data<Logger>>()
-            .map(|logger| logger.as_ref().clone())
-            .expect("no slog::Logger attached to actix-web App");
-        std::future::ready(Ok(DefaultContext { logger }))
-    }
-}
-
-#[cfg(test)]
-impl DefaultContext {
-    /// Create a context useful for texts.
-    pub fn fixture() -> DefaultContext {
-        let logger = Logger::root(slog::Discard, slog::o!());
-        DefaultContext { logger }
-    }
-}

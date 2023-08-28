@@ -1,8 +1,8 @@
 //! Strategies to detect store version information.
 use anyhow::Result;
 
-use crate::agent::framework::DefaultContext;
 use crate::agent::models::StoreVersion;
+use crate::context::Context;
 
 mod chain;
 mod command;
@@ -24,5 +24,5 @@ type DecodeFn = dyn Fn(Vec<u8>) -> Result<StoreVersion> + Send + Sync;
 #[async_trait::async_trait]
 pub trait StoreVersionStrategy {
     /// Fetch the store version.
-    async fn version(&self, context: &DefaultContext) -> Result<StoreVersion>;
+    async fn version(&self, context: &Context) -> Result<StoreVersion>;
 }

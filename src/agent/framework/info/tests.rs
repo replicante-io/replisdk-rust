@@ -4,7 +4,7 @@ use actix_web::test::read_body_json;
 use actix_web::test::TestRequest;
 use anyhow::Result;
 
-use crate::agent::framework::DefaultContext;
+use crate::agent::framework::tests::actix_app;
 use crate::agent::framework::NodeInfo;
 use crate::agent::models::AgentVersion;
 use crate::agent::models::Node;
@@ -14,6 +14,7 @@ use crate::agent::models::ShardRole;
 use crate::agent::models::ShardsInfo;
 use crate::agent::models::StoreExtras;
 use crate::agent::models::StoreVersion;
+use crate::context::Context;
 
 use super::into_actix_service;
 
@@ -28,9 +29,7 @@ impl FakeAgent {
 
 #[async_trait::async_trait]
 impl NodeInfo for FakeAgent {
-    type Context = DefaultContext;
-
-    async fn node_info(&self, _: &Self::Context) -> Result<Node> {
+    async fn node_info(&self, _: &Context) -> Result<Node> {
         Ok(Node {
             agent_version: AgentVersion {
                 checkout: "commit".into(),
@@ -49,7 +48,7 @@ impl NodeInfo for FakeAgent {
         })
     }
 
-    async fn shards(&self, _: &Self::Context) -> Result<ShardsInfo> {
+    async fn shards(&self, _: &Context) -> Result<ShardsInfo> {
         let shard = Shard {
             commit_offset: ShardCommitOffset::seconds(10),
             lag: None,
@@ -61,7 +60,7 @@ impl NodeInfo for FakeAgent {
         })
     }
 
-    async fn store_info(&self, _: &Self::Context) -> Result<StoreExtras> {
+    async fn store_info(&self, _: &Context) -> Result<StoreExtras> {
         Ok(StoreExtras {
             cluster_id: "cluster-mock".into(),
             attributes: Default::default(),
@@ -71,9 +70,8 @@ impl NodeInfo for FakeAgent {
 
 #[tokio::test]
 async fn info_node() {
-    let logger = slog::Logger::root(slog::Discard {}, slog::o!());
-    let agent = into_actix_service(FakeAgent::new(), logger);
-    let app = actix_web::App::new().service(agent);
+    let agent = into_actix_service(FakeAgent::new());
+    let app = actix_app().service(agent);
     let req = TestRequest::get().uri("/info/node").to_request();
 
     let app = init_service(app).await;
@@ -87,9 +85,8 @@ async fn info_node() {
 
 #[tokio::test]
 async fn info_store() {
-    let logger = slog::Logger::root(slog::Discard {}, slog::o!());
-    let agent = into_actix_service(FakeAgent::new(), logger);
-    let app = actix_web::App::new().service(agent);
+    let agent = into_actix_service(FakeAgent::new());
+    let app = actix_app().service(agent);
     let req = TestRequest::get().uri("/info/store").to_request();
 
     let app = init_service(app).await;
@@ -102,9 +99,8 @@ async fn info_store() {
 
 #[tokio::test]
 async fn shards() {
-    let logger = slog::Logger::root(slog::Discard {}, slog::o!());
-    let agent = into_actix_service(FakeAgent::new(), logger);
-    let app = actix_web::App::new().service(agent);
+    let agent = into_actix_service(FakeAgent::new());
+    let app = actix_app().service(agent);
     let req = TestRequest::get().uri("/info/shards").to_request();
 
     let app = init_service(app).await;

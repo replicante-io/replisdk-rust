@@ -1,7 +1,8 @@
 //! Builder for the entire Agent process.
 use std::time::Duration;
 
-use actix_web::FromRequest;
+use actix_web::web::Data;
+use actix_web::HttpServer;
 use anyhow::Result;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -20,7 +21,10 @@ use crate::agent::framework::Injector;
 use crate::agent::framework::NodeInfo;
 use crate::agent::framework::NodeInfoFactory;
 use crate::agent::framework::NodeInfoFactoryArgs;
+use crate::context::ActixTransform;
+use crate::context::Context;
 use crate::runtime::actix_web::AppConfigurer;
+use crate::runtime::actix_web::AppFactory;
 use crate::runtime::shutdown::ShutdownManager;
 use crate::runtime::shutdown::ShutdownManagerBuilder;
 use crate::runtime::telemetry::initialise as telemetry_init;
@@ -67,7 +71,6 @@ where
     // IF == InfoFactory
     IF: NodeInfoFactory<Conf = C>,
     IF::NodeInfo: NodeInfo,
-    IF::Context: FromRequest,
 {
     actions: ActionsRegistryBuilder,
     app: AppConfigurer,
@@ -84,7 +87,6 @@ where
     C: Clone + std::fmt::Debug + PartialEq + Serialize + DeserializeOwned,
     IF: NodeInfoFactory<Conf = C>,
     IF::NodeInfo: NodeInfo,
-    IF::Context: FromRequest,
 {
     /// Build an agent while reusing shared logic from the Replicante SDK.
     pub fn build() -> Self {
@@ -174,11 +176,12 @@ where
         slog::info!(telemetry.logger, "Process telemetry initialised");
 
         // Initialise agent globals.
+        let context = Context::root(telemetry.logger.clone()).build();
         let store = Store::initialise(&telemetry.logger, &conf.store_path).await?;
         let injector = Injector {
             actions: self.actions.finish(),
             config: conf.erase_custom(),
-            logger: telemetry.logger.clone(),
+            context,
             store,
         };
         Injector::initialise(injector.clone());
@@ -189,6 +192,7 @@ where
             conf: &conf,
             telemetry: &telemetry,
         };
+        Self::initialise_sdk(&initialiser_args)?;
         for initialiser in self.initialisers {
             initialiser.initialise(&initialiser_args).await?;
         }
@@ -205,25 +209,36 @@ where
         // Set up predefined agent endpoints.
         slog::debug!(telemetry.logger, "Configuring agent API endpoints");
         let mut app = self.app;
-        let api_logger = telemetry.logger.new(slog::o!("component" => "api"));
         let app_injector = injector.clone();
         app.with_config(move |conf| {
             let actions = ActionsService::with_injector(&app_injector);
             let info = node_info.clone();
-            let info = info::into_actix_service(info, api_logger.clone());
-            let info = actix_web::web::scope("/api/unstable")
+            let info = info::into_actix_service(info);
+            let scope = actix_web::web::scope("/api/unstable")
                 .service(info)
                 .service(actions);
-            conf.service(info);
+            conf.service(scope);
         });
 
         // Configure and start the HTTP Server.
-        let server = conf
-            .http
-            .opinionated(app)
+        let api_context = injector
+            .context
+            .derive()
+            .log_values(slog::o!("component" => "api"))
+            .build();
+        let factory = AppFactory::configure(app, conf.http.clone())
             .metrics(options.requests_metrics_prefix, telemetry.metrics.clone())
-            .run(Some(&telemetry.logger))?;
-        let shutdown = shutdown.watch_actix(server, ());
+            .done();
+        let server = HttpServer::new(move || {
+            let app = factory.initialise();
+            // Enable per-request contexts.
+            let app = app
+                .app_data(Data::new(api_context.clone()))
+                .wrap(ActixTransform);
+            factory.finalise(app)
+        });
+        let server = conf.http.apply(server)?;
+        let shutdown = shutdown.watch_actix(server.run(), ());
 
         // Spawn actions execution background task.
         let executor = ActionsExecutor::with_injector(&injector);
@@ -253,6 +268,19 @@ where
     {
         self.initialisers.push(Box::new(initialiser));
         self
+    }
+}
+
+impl<C, IF> Agent<C, IF>
+where
+    C: Clone + std::fmt::Debug + PartialEq + Serialize + DeserializeOwned,
+    IF: NodeInfoFactory<Conf = C>,
+    IF::NodeInfo: NodeInfo,
+{
+    /// Execute initialisation functions for Agent SDK components.
+    fn initialise_sdk(args: &InitialiseHookArgs<'_, C>) -> Result<()> {
+        crate::agent::framework::metrics::initialise(args)?;
+        Ok(())
     }
 }
 

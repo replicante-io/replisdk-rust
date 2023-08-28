@@ -2,11 +2,11 @@
 use std::sync::RwLock;
 
 use once_cell::sync::Lazy;
-use slog::Logger;
 
 use super::actions::ActionsRegistry;
 use super::store::Store;
 use super::AgentConf;
+use crate::context::Context;
 
 /// Singleton instance of the Process Globals container.
 static GLOBAL_INJECTOR: Lazy<RwLock<Option<Injector>>> = Lazy::new(|| RwLock::new(None));
@@ -23,8 +23,8 @@ pub struct Injector {
     /// from the singleton pattern.
     pub config: AgentConf<()>,
 
-    /// Global logger for the process.
-    pub logger: Logger,
+    /// Root context for the process.
+    pub context: Context,
 
     /// Agent persisted store.
     pub store: Store,
@@ -50,7 +50,7 @@ impl Injector {
 
         // Set the global injector for the process.
         slog::trace!(
-            injector.logger,
+            injector.context.logger,
             "Initialising Global Injector for the process"
         );
         *global_injector = Some(injector);
@@ -81,7 +81,7 @@ impl Injector {
         Self {
             actions: actions.finish(),
             config: Default::default(),
-            logger: Logger::root(slog::Discard, slog::o!()),
+            context: Context::fixture(),
             store: super::store::fixtures::store().await,
         }
     }

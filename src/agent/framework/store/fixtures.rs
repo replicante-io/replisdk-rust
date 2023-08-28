@@ -2,10 +2,10 @@
 use uuid::Uuid;
 
 use crate::agent::framework::store::Store;
-use crate::agent::framework::DefaultContext;
 use crate::agent::models::ActionExecution;
 use crate::agent::models::ActionExecutionPhase;
 use crate::agent::models::ActionExecutionState;
+use crate::context::Context;
 
 pub const ACTION_KIND: &str = "agent.replicante.io/test.success";
 
@@ -34,7 +34,7 @@ pub fn action(id: Uuid) -> ActionExecution {
 
 /// Create an in-memory store for tests to use.
 pub async fn store() -> Store {
-    let context = DefaultContext::fixture();
+    let context = Context::fixture();
     let path = ":memory:";
     Store::initialise(&context.logger, path)
         .await

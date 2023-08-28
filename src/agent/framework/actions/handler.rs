@@ -1,9 +1,9 @@
 //! Agent [`ActionExecution`] handling definitions.
 use anyhow::Result;
 
-use crate::agent::framework::DefaultContext;
 use crate::agent::models::ActionExecution;
 use crate::agent::models::ActionExecutionPhase;
+use crate::context::Context;
 
 /// Action logic to progress an [`ActionExecution`] record.
 #[async_trait::async_trait]
@@ -30,7 +30,7 @@ pub trait ActionHandler: std::fmt::Debug + Send + Sync {
     /// [`ActionExecutionState::phase`]: crate::agent::models::ActionExecutionState::phase
     async fn invoke(
         &self,
-        context: &DefaultContext,
+        context: &Context,
         action: &ActionExecution,
     ) -> Result<ActionHandlerChanges>;
 }

@@ -5,12 +5,12 @@
 use actix_web::dev::AppService;
 use actix_web::dev::HttpServiceFactory;
 use actix_web::web::Data;
-use actix_web::FromRequest;
 use anyhow::Result;
 
 use crate::agent::models::Node;
 use crate::agent::models::ShardsInfo;
 use crate::agent::models::StoreExtras;
+use crate::context::Context;
 
 mod node;
 mod shards;
@@ -33,11 +33,7 @@ pub use self::store_version::StoreVersionStrategy;
 pub struct ActixServiceFactory<I>
 where
     I: NodeInfo,
-    I::Context: FromRequest,
 {
-    /// The [`slog::Logger`] usable to make [`DefaultContext`](super::DefaultContext) instances.
-    logger: slog::Logger,
-
     /// The [`NodeInfo`] instance to register endpoints for.
     node_info: I,
 }
@@ -45,11 +41,9 @@ where
 impl<I> HttpServiceFactory for ActixServiceFactory<I>
 where
     I: NodeInfo,
-    I::Context: FromRequest,
 {
     fn register(self, config: &mut AppService) {
         let scope = actix_web::web::scope("/info")
-            .app_data(Data::new(self.logger))
             .app_data(Data::new(self.node_info))
             .service(
                 actix_web::web::resource("/node")
@@ -73,17 +67,14 @@ where
 /// Interface for Agents to get specification-defined information from a Store.
 #[async_trait::async_trait]
 pub trait NodeInfo: Clone + Send + Sync + 'static {
-    /// Additional context passed to requests.
-    type Context;
-
     /// Obtain information about the node, even when the store is not running.
-    async fn node_info(&self, context: &Self::Context) -> Result<Node>;
+    async fn node_info(&self, context: &Context) -> Result<Node>;
 
     /// Obtain information about all shards managed by the node.
-    async fn shards(&self, context: &Self::Context) -> Result<ShardsInfo>;
+    async fn shards(&self, context: &Context) -> Result<ShardsInfo>;
 
     /// Obtain information about the node only available when the store process is healthy.
-    async fn store_info(&self, context: &Self::Context) -> Result<StoreExtras>;
+    async fn store_info(&self, context: &Context) -> Result<StoreExtras>;
 }
 
 /// Wrap an [`NodeInfo`] type into an [`actix_web`] service factory.
@@ -92,10 +83,9 @@ pub trait NodeInfo: Clone + Send + Sync + 'static {
 /// The attached endpoints implement the information portion of [Agent API Specification].
 ///
 /// [Agent API Specification]: https://www.replicante.io/docs/spec/main/agent/api/
-pub fn into_actix_service<I>(node_info: I, logger: slog::Logger) -> ActixServiceFactory<I>
+pub fn into_actix_service<I>(node_info: I) -> ActixServiceFactory<I>
 where
     I: NodeInfo,
-    I::Context: FromRequest,
 {
-    ActixServiceFactory { node_info, logger }
+    ActixServiceFactory { node_info }
 }

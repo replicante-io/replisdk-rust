@@ -89,6 +89,9 @@
 //! - [`SentryOptions::in_app_include`]: a list of module prefixes for Sentry to consider part
 //!   of the instrumented applications.
 use anyhow::Result;
+use opentelemetry::sdk::Resource;
+use opentelemetry_semantic_conventions::resource::SERVICE_NAME;
+use opentelemetry_semantic_conventions::resource::SERVICE_VERSION;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -165,12 +168,12 @@ pub struct TelemetryOptions {
 }
 
 impl TelemetryOptions {
-    /// Default telemetry options using the given Sentry release ID.
-    pub fn for_sentry_release<S>(release: S) -> TelemetryOptions
+    /// Begin building telemetry options using the given Sentry release ID.
+    pub fn for_sentry_release<S>(release: S) -> TelemetryOptionsBuilder
     where
         S: Into<std::borrow::Cow<'static, str>>,
     {
-        TelemetryOptions {
+        TelemetryOptionsBuilder {
             logs: Default::default(),
             otel: Default::default(),
             sentry: SentryOptions::for_release(release),
@@ -178,10 +181,35 @@ impl TelemetryOptions {
     }
 }
 
+/// Build telemetry options for an application.
+pub struct TelemetryOptionsBuilder {
+    logs: LogOptions,
+    otel: OTelOptions,
+    sentry: SentryOptions,
+}
+
+impl TelemetryOptionsBuilder {
+    /// Complete initialisation of [`TelemetryOptions`].
+    pub fn finish(self) -> TelemetryOptions {
+        TelemetryOptions {
+            logs: self.logs,
+            otel: self.otel,
+            sentry: self.sentry,
+        }
+    }
+
+    /// Configure OpenTelemetry service metadata.
+    pub fn for_app(mut self, app: &'static str, version: &'static str) -> Self {
+        let resource = Resource::new([SERVICE_NAME.string(app), SERVICE_VERSION.string(version)]);
+        self.otel.resource = self.otel.resource.merge(&resource);
+        self
+    }
+}
+
 /// Initialise telemetry for the process.
 pub async fn initialise(conf: TelemetryConfig, options: TelemetryOptions) -> Result<Telemetry> {
     let (logger, slog_scope_guard) = self::logging::initialise(conf.logs, options.logs);
-    self::opentel::initialise(conf.otel, options.otel)?;
+    self::opentel::initialise(conf.otel, options.otel, logger.clone())?;
     let sentry = self::repli_sentry::initialise(conf.sentry, options.sentry)?;
     let metrics = self::prom::initialise(conf.prom_metrics)?;
     Ok(Telemetry {

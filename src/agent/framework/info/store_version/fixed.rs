@@ -2,8 +2,8 @@
 use anyhow::Result;
 
 use super::StoreVersionStrategy;
-use crate::agent::framework::DefaultContext;
 use crate::agent::models::StoreVersion;
+use crate::context::Context;
 
 /// Return a fixed store version every time.
 pub struct StoreVersionFixed {
@@ -19,7 +19,7 @@ impl StoreVersionFixed {
 
 #[async_trait::async_trait]
 impl StoreVersionStrategy for StoreVersionFixed {
-    async fn version(&self, _: &DefaultContext) -> Result<StoreVersion> {
+    async fn version(&self, _: &Context) -> Result<StoreVersion> {
         Ok(self.version.clone())
     }
 }

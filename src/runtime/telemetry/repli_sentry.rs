@@ -3,6 +3,8 @@ use std::str::FromStr;
 
 use anyhow::Context;
 use anyhow::Result;
+use opentelemetry::trace::TraceContextExt;
+use sentry::types::protocol::latest::Event;
 use sentry::ClientInitGuard;
 use serde::Deserialize;
 use serde::Serialize;
@@ -116,10 +118,32 @@ pub fn initialise(conf: SentryConfig, options: SentryOptions) -> Result<Option<C
         release: Some(options.release),
         sample_rate: conf.sample_ratio,
         shutdown_timeout: std::time::Duration::from_secs(conf.shutdown_timeout),
+        before_send: Some(std::sync::Arc::new(sentry_inject_trace_id)),
         ..Default::default()
     };
     let guard = sentry::init(options);
     Ok(Some(guard))
+}
+
+/// Process every sentry event before it is sent to inject OpenTelemetry trace and span IDs.
+fn sentry_inject_trace_id(mut event: Event) -> Option<Event> {
+    let context = opentelemetry::Context::current();
+    let span = context.span();
+    let trace_id = span.span_context().trace_id();
+    let span_id = span.span_context().span_id();
+    if trace_id != opentelemetry::trace::TraceId::INVALID {
+        event.extra.insert(
+            "opentelemetry.trace_id".to_string(),
+            trace_id.to_string().into(),
+        );
+    }
+    if span_id != opentelemetry_api::trace::SpanId::INVALID {
+        event.extra.insert(
+            "opentelemetry.span_id".to_string(),
+            span_id.to_string().into(),
+        );
+    }
+    Some(event)
 }
 
 #[cfg(test)]

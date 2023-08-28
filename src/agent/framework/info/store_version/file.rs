@@ -1,11 +1,11 @@
 //! Read the store version from a file.
-use anyhow::Context;
+use anyhow::Context as AnyContext;
 use anyhow::Result;
 
 use super::DecodeFn;
 use super::StoreVersionStrategy;
-use crate::agent::framework::DefaultContext;
 use crate::agent::models::StoreVersion;
+use crate::context::Context;
 
 /// Read the store version from a file.
 ///
@@ -41,7 +41,7 @@ impl StoreVersionFile {
 
 #[async_trait::async_trait]
 impl StoreVersionStrategy for StoreVersionFile {
-    async fn version(&self, _: &DefaultContext) -> Result<StoreVersion> {
+    async fn version(&self, _: &Context) -> Result<StoreVersion> {
         // Read the whole file into a buffer.
         let data = tokio::fs::read(&self.path)
             .await
@@ -75,8 +75,8 @@ mod tests {
     use super::StoreVersionFile;
     use super::StoreVersionFileError;
     use super::StoreVersionStrategy;
-    use crate::agent::framework::DefaultContext;
     use crate::agent::models::StoreVersion;
+    use crate::context::Context;
 
     const TEST_CUSTOM: &str = "src/agent/framework/info/store_version/fixtures/file_custom.txt";
     const TEST_DEFAULT: &str = "src/agent/framework/info/store_version/fixtures/file_default.yaml";
@@ -93,7 +93,7 @@ mod tests {
     #[tokio::test]
     async fn file_not_found() {
         let strategy = StoreVersionFile::new(TEST_NOT_FINED);
-        let context = DefaultContext::fixture();
+        let context = Context::fixture();
         let version = strategy.version(&context).await;
         match version {
             Ok(version) => panic!("expected StoreVersionFileError, got version {:?}", version),
@@ -105,7 +105,7 @@ mod tests {
     #[tokio::test]
     async fn custom_decode_fn() {
         let strategy = StoreVersionFile::new(TEST_CUSTOM).decode(custom_decode);
-        let context = DefaultContext::fixture();
+        let context = Context::fixture();
         let version = strategy.version(&context).await.unwrap();
         assert_eq!(version.checkout, Some("ch".into()));
         assert_eq!(version.extra, Some("ex".into()));
@@ -115,7 +115,7 @@ mod tests {
     #[tokio::test]
     async fn default_decode_yaml() {
         let strategy = StoreVersionFile::new(TEST_DEFAULT);
-        let context = DefaultContext::fixture();
+        let context = Context::fixture();
         let version = strategy.version(&context).await.unwrap();
         assert_eq!(version.checkout, Some("c".into()));
         assert_eq!(version.extra, Some("e".into()));

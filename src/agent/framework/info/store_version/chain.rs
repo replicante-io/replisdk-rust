@@ -4,8 +4,8 @@ use std::sync::Arc;
 use anyhow::Result;
 
 use super::StoreVersionStrategy;
-use crate::agent::framework::DefaultContext;
 use crate::agent::models::StoreVersion;
+use crate::context::Context;
 
 /// Chain multiple [`StoreVersionStrategy`] to detect store version with the first success one.
 ///
@@ -29,7 +29,7 @@ impl StoreVersionChain {
 
 #[async_trait::async_trait]
 impl StoreVersionStrategy for StoreVersionChain {
-    async fn version(&self, context: &DefaultContext) -> Result<StoreVersion> {
+    async fn version(&self, context: &Context) -> Result<StoreVersion> {
         let mut strategies = self.strategies.iter();
         let first = match strategies.next() {
             None => anyhow::bail!(StoreVersionChainError::NoStrategiesSet),
@@ -85,8 +85,8 @@ mod tests {
     use super::StoreVersionChain;
     use super::StoreVersionChainError;
     use super::StoreVersionStrategy;
-    use crate::agent::framework::DefaultContext;
     use crate::agent::models::StoreVersion;
+    use crate::context::Context;
 
     /// Fail requests for store versions.
     struct Fail(Box<dyn Fn() -> anyhow::Error + Send + Sync>);
@@ -103,7 +103,7 @@ mod tests {
 
     #[async_trait::async_trait]
     impl StoreVersionStrategy for Fail {
-        async fn version(&self, _: &DefaultContext) -> Result<StoreVersion> {
+        async fn version(&self, _: &Context) -> Result<StoreVersion> {
             let error = (self.0)();
             Err(error)
         }
@@ -118,7 +118,7 @@ mod tests {
         });
         let chain = StoreVersionChain::default().strategy(fixed);
 
-        let context = DefaultContext::fixture();
+        let context = Context::fixture();
         let version = chain.version(&context).await.unwrap();
         assert_eq!(version.checkout, None);
         assert_eq!(version.extra, None);
@@ -134,7 +134,7 @@ mod tests {
         let error = Fail::new(|| anyhow::anyhow!("error 2"));
         let chain = chain.strategy(error);
 
-        let context = DefaultContext::fixture();
+        let context = Context::fixture();
         let version = chain.version(&context).await;
         match version {
             Ok(version) => panic!("unexpected version {:?}", version),
@@ -145,7 +145,7 @@ mod tests {
     #[tokio::test]
     async fn no_strategies_defined() {
         let chain = StoreVersionChain::default();
-        let context = DefaultContext::fixture();
+        let context = Context::fixture();
         let version = chain.version(&context).await;
         match version {
             Ok(version) => panic!("unexpected version {:?}", version),
@@ -168,7 +168,7 @@ mod tests {
         });
         let chain = chain.strategy(fixed);
 
-        let context = DefaultContext::fixture();
+        let context = Context::fixture();
         let version = chain.version(&context).await.unwrap();
         assert_eq!(version.checkout, None);
         assert_eq!(version.extra, None);

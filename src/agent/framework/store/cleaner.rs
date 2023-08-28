@@ -3,12 +3,14 @@ use std::future::Future;
 use std::time::Duration;
 
 use anyhow::Result;
+use opentelemetry_api::trace::FutureExt;
 
 use super::Store;
 use crate::agent::framework::store::manage;
-use crate::agent::framework::DefaultContext;
 use crate::agent::framework::Injector;
+use crate::context::Context;
 use crate::utils::error::slog::ErrorAttributes;
+use crate::utils::trace::TraceFutureErrExt;
 
 const EXECUTE_DELAY: Duration = Duration::from_secs(10);
 const SECS_IN_A_DAY: u32 = 24 * 60 * 60;
@@ -23,7 +25,7 @@ const SECS_IN_A_DAY: u32 = 24 * 60 * 60;
 /// - Finished actions are removed after the configured amount of time.
 pub struct StoreClean {
     clean_age: Duration,
-    context: DefaultContext,
+    context: Context,
     store: Store,
 }
 
@@ -35,16 +37,24 @@ impl StoreClean {
     {
         tokio::pin!(shutdown);
         slog::debug!(self.context.logger, "Starting background store cleaner");
+        let tracer = crate::agent::framework::trace::tracer();
 
         loop {
+            // Create a root span to trace activities of this loop.
+            let context = crate::utils::trace::root(&tracer, "store.clean");
+
             // Execute a cleaning loop.
-            if let Err(error) = self.task_loop().await {
+            let result = self
+                .task_loop()
+                .trace_on_err_with_status()
+                .with_context(context)
+                .await;
+            if let Err(error) = result {
                 slog::error!(
                     self.context.logger,
                     "Store clean loop encountered an error";
                     ErrorAttributes::from(&error)
                 );
-                // TODO(metrics): count errors.
             }
 
             // Sleep until the next cycle or shutdown.
@@ -62,11 +72,11 @@ impl StoreClean {
     pub fn with_injector(injector: &Injector) -> StoreClean {
         let clean_age = injector.config.actions.clean_age * SECS_IN_A_DAY;
         let clean_age = Duration::from_secs(u64::from(clean_age));
-        let context = DefaultContext {
-            logger: injector
-                .logger
-                .new(slog::o!("component" => "store-cleaner")),
-        };
+        let context = injector
+            .context
+            .derive()
+            .log_values(slog::o!("component" => "store-cleaner"))
+            .build();
         StoreClean {
             clean_age,
             context,
@@ -90,20 +100,20 @@ mod tests {
 
     use time::OffsetDateTime;
 
-    use super::DefaultContext;
     use super::Injector;
     use super::StoreClean;
     use crate::agent::framework::store::fixtures;
     use crate::agent::models::ActionExecutionPhase;
+    use crate::context::Context;
 
     struct Fixtures {
-        context: DefaultContext,
+        context: Context,
         injector: Injector,
     }
 
     impl Fixtures {
         async fn default() -> Fixtures {
-            let context = DefaultContext::fixture();
+            let context = Context::fixture();
             let mut injector = Injector::fixture().await;
             injector.config.actions.clean_age = 1;
             Fixtures { context, injector }

@@ -49,7 +49,7 @@ pub struct OTelOptions {
     pub batch_config: Option<opentelemetry::sdk::trace::BatchConfig>,
 
     /// Attributes representing the process that produces telemetry data.
-    pub resource: Option<opentelemetry::sdk::Resource>,
+    pub resource: opentelemetry::sdk::Resource,
 }
 
 /// Trace sampling configuration.
@@ -103,7 +103,15 @@ impl From<SamplerMode> for SdkSampler {
 }
 
 /// Initialise the OpenTelemetry framework for the process.
-pub fn initialise(conf: OTelConfig, options: OTelOptions) -> Result<()> {
+pub fn initialise(conf: OTelConfig, options: OTelOptions, logger: slog::Logger) -> Result<()> {
+    // Set up proper logging for unhandled errors (default is printing to standard error).
+    opentelemetry::global::set_error_handler(move |error| {
+        let error = anyhow::Error::from(error);
+        let attrs = crate::utils::error::slog::ErrorAttributes::from(&error);
+        slog::warn!(logger, "Unhandled OpenTelemetry error occurred"; attrs);
+    })?;
+
+    // Skip further setup if tracing is not enabled.
     if !conf.enabled {
         return Ok(());
     }
@@ -119,11 +127,9 @@ pub fn initialise(conf: OTelConfig, options: OTelOptions) -> Result<()> {
     }
 
     // Create and configure OTel Pipeline.
-    let mut pipeline_conf =
-        opentelemetry::sdk::trace::config().with_sampler(SdkSampler::from(conf.sampling));
-    if let Some(resource) = options.resource {
-        pipeline_conf = pipeline_conf.with_resource(resource);
-    }
+    let pipeline_conf = opentelemetry::sdk::trace::config()
+        .with_sampler(SdkSampler::from(conf.sampling))
+        .with_resource(options.resource);
     let mut pipeline = opentelemetry_otlp::new_pipeline()
         .tracing()
         .with_exporter(exporter)

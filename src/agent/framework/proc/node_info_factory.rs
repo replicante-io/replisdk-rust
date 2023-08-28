@@ -1,6 +1,5 @@
 //! Factory trait to initialise the selected [`NodeInfo`] implementation
 //! at the right stage of process initialisation.
-use actix_web::FromRequest;
 use anyhow::Result;
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -15,11 +14,8 @@ pub trait NodeInfoFactory {
     /// Agent configuration specific to the implementation.
     type Conf: Clone + std::fmt::Debug + Serialize + DeserializeOwned;
 
-    /// Additional context passed to information requests.
-    type Context: FromRequest;
-
     /// Implementation of the [`NodeInfo`] interface returned by this factory.
-    type NodeInfo: NodeInfo<Context = Self::Context>;
+    type NodeInfo: NodeInfo;
 
     /// Initialise the [`NodeInfo`] gathering implementation.
     async fn factory<'a>(
