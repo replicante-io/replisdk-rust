@@ -109,11 +109,11 @@ pub enum ActionExecutionPhase {
 /// API Request schema for an [`ActionExecution`] schedule call.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ActionExecutionRequest {
-    /// Arguments passed to the action being created.
+    /// Arguments passed to the action execution being created.
     #[serde(default)]
     pub args: Json,
 
-    /// Time the action was first created.
+    /// Time the action execution was first created.
     ///
     /// An action execution may be created in systems other then Agents (such as Core).
     /// In such cases the `created_time` is the time the action execution was created in the

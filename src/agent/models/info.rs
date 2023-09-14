@@ -23,7 +23,7 @@ pub struct AgentVersion {
 
 /// Typed value of a Node attribute.
 #[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
-#[serde(tag = "type", content = "value")]
+#[serde(untagged)]
 pub enum AttributeValue {
     /// Represents a boolean attribute value.
     Boolean(bool),
@@ -93,24 +93,31 @@ pub struct Node {
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum NodeStatus {
     /// The agent is unable to connect to the node.
+    #[serde(rename = "UNAVAILABLE")]
     Unavailable,
 
     /// The node is running but it is not part of any cluster.
+    #[serde(rename = "NOT_IN_CLUSTER")]
     NotInCluster,
 
     /// The node is in the process of joining a cluster.
+    #[serde(rename = "JOINING_CLUSTER")]
     JoiningCluster,
 
     /// The node is in the process of leaving a cluster.
+    #[serde(rename = "LEAVING_CLUSTER")]
     LeavingCluster,
 
     /// The agent has confirmed the node has experienced an issue and is unhealthy.
+    #[serde(rename = "UNHEALTHY")]
     Unhealthy,
 
     /// The agent can connect to the node and has not noticed any failures.
+    #[serde(rename = "HEALTHY")]
     Healthy,
 
     /// The agent was unable to determine the sate of the node (and provides a reason).
+    #[serde(rename = "UNKNOWN")]
     Unknown(String),
 }
 
