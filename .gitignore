@@ -11,10 +11,9 @@ Cargo.lock
 *.pdb
 
 # IDE
-.vscode/
-
+.vscode/**
+!.vscode/settings.json
 
 # Added by cargo
-
 /target
 /Cargo.lock

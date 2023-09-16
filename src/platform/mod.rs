@@ -1,4 +1,4 @@
-//! Abstraction layer for Replicante ecosystem to integrate with (infrastructure) Platforms.
+//! Abstraction layer for the Replicante ecosystem to integrate with (infrastructure) Platforms.
 //!
 //! # Platform integrations
 //!
@@ -28,8 +28,8 @@
 //! ## Node deprovisioning
 //!
 //! Node deprovisioning is still a work in progress and will be added soon.
-#[cfg(feature = "platform-models")]
-pub mod models;
-
 #[cfg(feature = "platform-framework")]
 pub mod framework;
+
+#[cfg(feature = "platform-models")]
+pub mod models;

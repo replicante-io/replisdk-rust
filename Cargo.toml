@@ -4,7 +4,7 @@ version = "0.1.1"
 description = "All in one SDK to develop Replicante ecosystem components in Rust"
 
 edition = "2021"
-rust-version = "1.63"
+rust-version = "1.68"
 
 homepage = "https://replicante.io"
 license = "MIT"
@@ -19,9 +19,52 @@ exclude = [
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
+## (Replicante) Agent features
+# Enable all agent related features.
+agent = ["agent-framework", "agent-models"]
+# Enable Agent framework code.
+agent-framework = [
+  "actix-web",
+  "actix-web/openssl",
+  "anyhow",
+  "async-trait",
+  "once_cell",
+  "openssl",
+  "opentelemetry_api",
+  "prometheus",
+  "refinery",
+  "rusqlite",
+  "serde_yaml",
+  "slog",
+  "thiserror",
+  "tokio-rusqlite",
+  "tokio",
+  "tokio/fs",
+  "tokio/process",
+  "tokio/time",
+
+  "agent-models",
+  "context",
+  "runtime-actix_builder",
+  "runtime-shutdown",
+  "runtime-shutdown_actix",
+  "runtime-telemetry",
+  "utils-actix_error",
+  "utils-error_json",
+  "utils-error_slog",
+  "utils-metrics",
+  "utils-trace",
+]
+# Enable definitions of agent data models.
+agent-models = ["serde", "serde_json", "time", "uuid"]
+
+## Context features
+# Enable a general purpose container to carry scoped values around.
+context = ["slog"]
+
 ## Platform features
 # Enable all platform related features.
-platform = ["platform-framework", "platform-models"]
+platform = ["platform-framework", "platform-framework_actix", "platform-models"]
 # Enable Platform framework code.
 platform-framework = ["anyhow", "async-trait", "futures", "platform-models", "slog"]
 platform-framework_actix = ["actix-web", "platform-framework", "utils-actix_error"]
@@ -35,32 +78,119 @@ replicore = ["replicore-models"]
 replicore-models = ["serde", "serde_json"]
 
 ## Runtime features.
-# Enable access to the ShutdownManager object and core tokio-based runtime utilities.
-runtime = ["anyhow", "futures", "slog", "thiserror", "tokio"]
+# Enable all available runtime features.
+runtime = ["runtime-actix_builder", "runtime-shutdown", "runtime-telemetry"]
+# Enable Actix Web server runtime configuration utilities.
+runtime-actix_builder = [
+  "actix-http",
+  "actix-service",
+  "actix-web",
+  "actix-web-opentelemetry",
+  "anyhow",
+  "serde",
+  "slog",
+  "thiserror",
+
+  "runtime-telemetry",
+  "runtime-tokio_conf",
+  "utils-actix_metrics",
+]
+# Enable ShutdownManager and core tokio-based runtime utilities.
+runtime-shutdown = ["anyhow", "futures", "slog", "thiserror", "tokio"]
+# Enable ShutdownManager extension to watch for `actix_web` servers.
+runtime-shutdown_actix = ["actix-web"]
+# Enable telemetry initialisation utilities.
+runtime-telemetry = [
+  "anyhow",
+  "opentelemetry",
+  "opentelemetry-otlp",
+  "opentelemetry-semantic-conventions",
+  "prometheus",
+  "sentry",
+  "serde",
+  "slog",
+  "slog-async",
+  "slog-envlogger",
+  "slog-json",
+  "slog-scope",
+  "slog-stdlog",
+  "slog-term",
+  "thiserror",
+
+  "utils-error_slog",
+]
+# Enable tokio runtime configuration utilities.
+runtime-tokio_conf = ["tokio"]
+
+## Testing features
+# Enable test fixtures defined by other features.
+test-fixtrue = []
 
 ## Various utilities and common tasks.
 # Provides an `actix_web` error type that works with `anyhow::Error`.
 utils-actix_error = ["actix-web", "anyhow", "serde_json", "thiserror"]
+# Provides `actix_web` utilities to capture and export prometheus metrics.
+utils-actix_metrics = ["actix-web", "futures-util", "prometheus", "utils-actix_error"]
+# Utility function to encode an error into a JSON object.
+utils-error_json = ["anyhow", "serde_json"]
+# Provides a standard way to log errors as slog key/value pairs.
+utils-error_slog = ["anyhow", "slog"]
+# Utilities to introspect applications and libraries with metrics more easley.
+utils-metrics = ["prometheus"]
+# Utilities to introspect applications and libraries with traces more easley.
+utils-trace = ["anyhow", "opentelemetry_api", "pin-project-lite"]
 
 [dependencies]
+actix-http = { version = "^3.0", optional = true }
+actix-service = { version = "^2.0", optional = true }
 actix-web = { version = "^4.3", optional = true }
+actix-web-opentelemetry = { version = "^0.15", optional = true, features = ["sync-middleware"] }
 anyhow = { version = "^1.0", features = ["backtrace"], optional = true }
 async-trait = { version = "^0.1", optional = true }
 futures = { version = "^0.3", optional = true }
+futures-util = { version = "^0.3", optional = true }
+once_cell = { version = "^1.18", optional = true }
+openssl = { version = "^0.10", optional = true }
+opentelemetry = { version = "^0.20", optional = true, features = ["rt-tokio"] }
+opentelemetry_api = { version = "^0.20", optional = true }
+opentelemetry-otlp = { version = "^0.13", optional = true }
+opentelemetry-semantic-conventions = { version = "^0.12", optional = true }
+pin-project-lite = { version = "^0.2", optional = true }
+prometheus = { version = "^0.13", optional = true, features = ["process"] }
+refinery = { version = "^0.8", optional = true, features = ["rusqlite"] }
+rusqlite = { version = "^0.29", optional = true, features = ["bundled"] }
+sentry = { version = "^0.31", optional = true }
 serde = { version = "^1.0", optional = true, features = ["derive"] }
 serde_json = { version = "^1.0", optional = true }
+serde_yaml = { version = "^0.9", optional = true }
 slog = { version = "^2.0", optional = true }
+slog-async = { version = "^2.0", optional = true }
+slog-envlogger = { version = "^2.0", optional = true }
+slog-json = { version = "^2.0", optional = true }
+slog-scope = { version = "^4.0", optional = true }
+slog-stdlog = { version = "^4.0", optional = true }
+slog-term = { version = "^2.0", optional = true }
 thiserror = { version = "^1.0", optional = true }
+time = { version = "^0.3", optional = true, features = ["formatting", "parsing", "serde"] }
 tokio = { version = "^1.0", optional = true, features = ["macros", "rt", "signal", "sync", "time"] }
+uuid = { version = "^1.4", optional = true, features = ["v4"] }
+
+# Changes needed to support custom errors have not been published yet so point directly to repo.
+#tokio-rusqlite = { version = "^0.4", optional = true }
+tokio-rusqlite = { git = "https://github.com/programatik29/tokio-rusqlite.git", rev = "ee94a85", optional = true }
 
 # Always depend on the proc macros crate matching our exact version!
 replisdk-proc = { version = "=0.1.1", path = "./proc"}
+
+[dev-dependencies]
+rstest = "^0.18"
 
 [package.metadata.docs.rs]
 all-features = true
 
 [workspace]
 members = [
+  ".",
   "experimental",
   "experimental-proc",
   "proc",

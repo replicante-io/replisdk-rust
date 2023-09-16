@@ -6,7 +6,7 @@ if [ $# -lt 2 ]; then
   echo "Usage: ci/check-worksapce.sh [OPTIONS] NAME MANIFEST-PATH" >&2
   echo "" >&2
   echo "OPTIONS:" >&2
-  echo "    --full             Run clippy and fmt checks on top of tests" >&2
+  echo "    --full             Run clippy, fmt and doc checks on top of tests" >&2
   echo "    --no-all-features  Disable the --all-features flag to cargo commands" >&2
   exit 1
 fi

@@ -20,42 +20,64 @@
 //!
 //! For example features can be used to:
 //!
-//! * Enable all logic related to Replicante Platforms, typically needed to implement Platforms.
-//! * Enable specific parts such as Platform models, typically needed to implement Platform clients.
+//! - Enable all logic related to Replicante Platforms, typically needed to implement Platforms.
+//! - Enable specific parts such as Platform models, typically needed to implement Platform clients.
 //!
 //! Cargo features follow a standard naming convention: `${AREA}-${FEATURE}`,
 //! with an `${AREA}` feature also available to enable all `${AREA}-*` features.
 //!
 //! By default the SDK provides little to nothing and requires you to opt into what you need:
 //!
+//! ## Agents
+//!
+//! The following features are available for the agents area:
+//!
+//! - `agent-framework`: Enable tools to implement Replicante Agents.
+//! - `agent-models`: Enable definitions of (Replicante) agent data models.
+//!
+//! ## Context
+//!
+//! The `context` feature enables a general purpose container to carry scoped values around.
+//! Different frameworks in the SDK use contexts to carry request specific information.
+//!
 //! ## Platforms
 //!
 //! The following features are available for the platforms area:
 //!
-//! * `platform-framework`: Enable tools to implement Replicante Platform servers.
-//! * `platform-framework_actix`: Enable utilities to run `IPlatform`s in `actix_web` servers.
-//! * `platform-models`: Enable definitions of (infrastructure) platform data models.
+//! - `platform-framework`: Enable tools to implement Replicante Platform servers.
+//! - `platform-framework_actix`: Enable utilities to run `IPlatform`s in `actix_web` servers.
+//! - `platform-models`: Enable definitions of (infrastructure) platform data models.
 //!
 //! ## RepliCore
 //!
 //! The following features are available for the Replicante Core area:
 //!
-//! * `replicore-models`: Enable definitions of Replicante Core data and API models.
+//! - `replicore-models`: Enable definitions of Replicante Core data and API models.
 //!
 //! ## Runtime
 //!
 //! The runtime provides utilities to manage general features and needs of the process lifecycle.
 //!
-//! Unlike with other areas the `runtime` feature does not enable ALL available features but only
-//! process shutdown handling, with other features added optionally.
+//! - `runtime-actix_builder`: Enable Actix Web server runtime configuration utilities.
+//! - `runtime-shutdown`: Enable tools to manage process shutdown on error or at user's request.
+//! - `runtime-shutdown_acitx`: Enable process shutdown extension to watch for `actix_web` servers.
+//! - `runtime-telemetry`: Enable utilities to initialise runtime telemetry of the process.
+//! - `runtime-tokio_conf`: Enable tokio runtime configuration utilities.
 //!
-//! * `runtime`: Enable tools to manage process shutdown on error or at user's request.
+//! ## Testing
 //!
-//! ## utilities
+//! - `test-fixture`: Enable test fixtures defined by other features.
+//!
+//! ## Utilities
 //!
 //! A configurable collection of various utilities and code for common tasks.
 //!
-//! * `utils-actix_error`: An `actix_web` error type that works with `anyhow::Error`.
+//! - `utils-actix_error`: An `actix_web` error type that works with `anyhow::Error`.
+//! - `utils-actix_metrics`: Collect metrics about processed requests and an exporter all metrics.
+//! - `utils-error_json`: Utility function to encode an error into a JSON object.
+//! - `utils-error_slog`: Standard way to log errors as slog key/value pairs.
+//! - `utils-metrics`: Utilities to introspect applications and libraries with metrics more easley.
+//! - `utils-trace`: Utilities to introspect applications and libraries with traces more easley.
 //!
 //! # The experimental crate
 //!
@@ -65,19 +87,30 @@
 //! `replisdk-experimental` crate.
 //! This crate, as the name suggests, has no stability guarantees:
 //!
-//! * Added features may never become stable and could be dropped without replacement.
-//! * Breaking changes can be made across any version, so the crate will likely never reach 1.0.
+//! - Added features may never become stable and could be dropped without replacement.
+//! - Breaking changes can be made across any version, so the crate will likely never reach 1.0.
 //!
 //! [Rust Lang]: https://www.rust-lang.org/
 #![deny(missing_docs)]
 
-#[cfg(any(feature = "replicore-models"))]
+#[cfg(any(feature = "agent-framework", feature = "agent-models"))]
+pub mod agent;
+
+#[cfg(feature = "context")]
+pub mod context;
+
+#[cfg(feature = "replicore-models")]
 pub mod core;
 
 #[cfg(any(feature = "platform-framework", feature = "platform-models"))]
 pub mod platform;
 
-#[cfg(feature = "runtime")]
+#[cfg(any(
+    feature = "runtime-actix_builder",
+    feature = "runtime-shutdown",
+    feature = "runtime-telemetry",
+    feature = "runtime-tokio_conf",
+))]
 pub mod runtime;
 
 #[cfg(feature = "utils-actix_error")]

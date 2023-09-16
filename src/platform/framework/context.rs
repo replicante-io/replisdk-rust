@@ -13,13 +13,13 @@ pub struct DefaultContext {
 #[cfg(feature = "platform-framework_actix")]
 impl actix_web::FromRequest for DefaultContext {
     type Error = actix_web::Error;
-    type Future = futures::future::Ready<std::result::Result<Self, Self::Error>>;
+    type Future = std::future::Ready<std::result::Result<Self, Self::Error>>;
 
     fn from_request(req: &actix_web::HttpRequest, _: &mut actix_web::dev::Payload) -> Self::Future {
         let logger = req
             .app_data::<actix_web::web::Data<Logger>>()
             .map(|logger| logger.as_ref().clone())
             .expect("no slog::Logger attached to actix-web App");
-        futures::future::ready(Ok(DefaultContext { logger }))
+        std::future::ready(Ok(DefaultContext { logger }))
     }
 }

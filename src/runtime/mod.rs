@@ -1,6 +1,12 @@
-//! Utilities and logic for process runtime management.
-mod shutdown;
+//! Utilities to manage general features and needs of the process lifecycle.
+#[cfg(feature = "runtime-actix_builder")]
+pub mod actix_web;
 
-pub use self::shutdown::ShutdownManager;
-pub use self::shutdown::ShutdownManagerBuilder;
-pub use self::shutdown::DEFAULT_SHUTDOWN_GRACE_TIMEOUT;
+#[cfg(feature = "runtime-shutdown")]
+pub mod shutdown;
+
+#[cfg(feature = "runtime-telemetry")]
+pub mod telemetry;
+
+#[cfg(feature = "runtime-tokio_conf")]
+pub mod tokio_conf;
