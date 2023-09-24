@@ -85,8 +85,10 @@ runtime-actix_builder = [
   "actix-http",
   "actix-service",
   "actix-web",
+  "actix-web/openssl",
   "actix-web-opentelemetry",
   "anyhow",
+  "openssl",
   "serde",
   "slog",
   "thiserror",
@@ -120,7 +122,7 @@ runtime-telemetry = [
   "utils-error_slog",
 ]
 # Enable tokio runtime configuration utilities.
-runtime-tokio_conf = ["tokio"]
+runtime-tokio_conf = ["serde", "tokio"]
 
 ## Testing features
 # Enable test fixtures defined by other features.
@@ -172,7 +174,7 @@ slog-stdlog = { version = "^4.0", optional = true }
 slog-term = { version = "^2.0", optional = true }
 thiserror = { version = "^1.0", optional = true }
 time = { version = "^0.3", optional = true, features = ["formatting", "parsing", "serde"] }
-tokio = { version = "^1.0", optional = true, features = ["macros", "rt", "signal", "sync", "time"] }
+tokio = { version = "^1.0", optional = true, features = ["macros", "rt", "rt-multi-thread", "signal", "sync", "time"] }
 uuid = { version = "^1.4", optional = true, features = ["v4"] }
 
 # Changes needed to support custom errors have not been published yet so point directly to repo.

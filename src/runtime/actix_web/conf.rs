@@ -18,6 +18,24 @@ use serde::Serialize;
 use super::BuildError;
 
 /// User focused configuration options for [`HttpServer`]s.
+///
+/// ## Default bind address
+///
+/// The default bind address when not specified in configuration files is `localhost:8000`.
+///
+/// This value can be changed at compile time to a project specific default by
+/// setting the `REPLISDK_ACITX_DEFAULT_BIND` environment variable when the crate is compiled.
+///
+/// To have `cargo` set this variable for all commands you can add the below to your project's
+/// `${PROJECT_ROOT}/.cargo/config.toml`:
+///
+/// ```toml
+/// [env]
+/// REPLISDK_ACITX_DEFAULT_BIND = "localhost:12345"
+/// ```
+///
+/// If you change this value but your builds still use a previous value or the default
+/// try clearing all build caches with `cargo clean`.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct ServerConfig {
     /// Sets the maximum number of pending connections.
@@ -92,7 +110,10 @@ pub struct ServerConfig {
 
 impl ServerConfig {
     fn default_bind() -> String {
-        "localhost:8000".into()
+        match std::option_env!("REPLISDK_ACITX_DEFAULT_BIND") {
+            None => "localhost:8000".into(),
+            Some(default) => default.into(),
+        }
     }
 
     fn default_compress_responses() -> bool {

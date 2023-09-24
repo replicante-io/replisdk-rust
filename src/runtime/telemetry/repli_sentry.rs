@@ -137,7 +137,7 @@ fn sentry_inject_trace_id(mut event: Event) -> Option<Event> {
             trace_id.to_string().into(),
         );
     }
-    if span_id != opentelemetry_api::trace::SpanId::INVALID {
+    if span_id != opentelemetry::trace::SpanId::INVALID {
         event.extra.insert(
             "opentelemetry.span_id".to_string(),
             span_id.to_string().into(),

@@ -9,13 +9,13 @@ actions:
   # Seconds to pause between action execution cycles.
   execute_interval: 10
 
-# Agent HTTP Server interface configuration.
+# HTTP Server configuration.
 http:
   # Sets the maximum number of pending connections.
   backlog: ~
 
   # Resolves socket address(es) and binds server to created listener(s).
-  bind: "localhost:6000"
+  bind: "localhost:8000"
 
   # Maximum time in milliseconds allowed for clients to send all request headers.
   #

@@ -53,7 +53,7 @@ where
     #[serde(flatten, deserialize_with = "C::deserialize")]
     pub custom: C,
 
-    /// ActixWeb HTTP Server configuration.
+    /// HTTP Server configuration.
     #[serde(default)]
     pub http: ServerConfig,
 
