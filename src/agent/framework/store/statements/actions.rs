@@ -6,11 +6,11 @@ use tokio_rusqlite::Connection;
 
 use super::StatementError;
 use crate::agent::framework::metrics;
-use crate::agent::framework::store::encoding;
 use crate::agent::models::ActionExecution;
 use crate::agent::models::ActionExecutionList;
 use crate::agent::models::ActionExecutionListItem;
 use crate::agent::models::ActionExecutionState;
+use crate::utils::encoding;
 use crate::utils::metrics::CountErrExt;
 use crate::utils::metrics::CountFutureErrExt;
 use crate::utils::trace::TraceFutureStdErrExt;

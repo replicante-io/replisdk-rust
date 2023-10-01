@@ -1,6 +1,8 @@
 //! Collection of various utilities and code for common tasks.
 #[cfg(any(feature = "utils-actix_error", feature = "utils-actix_metrics"))]
 pub mod actix;
+#[cfg(feature = "utils-encoding")]
+pub mod encoding;
 #[cfg(any(feature = "utils-error_json", feature = "utils-error_slog"))]
 pub mod error;
 #[cfg(feature = "utils-metrics")]

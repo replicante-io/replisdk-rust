@@ -90,7 +90,11 @@ where
 {
     /// Build an agent while reusing shared logic from the Replicante SDK.
     pub fn build() -> Self {
-        let shutdown = ShutdownManager::builder().watch_signal_with_default();
+        let shutdown = {
+            let mut builder = ShutdownManager::builder();
+            builder.watch_signal_with_default();
+            builder
+        };
         Agent {
             actions: ActionsRegistry::build(),
             app: AppConfigurer::default(),
@@ -169,8 +173,8 @@ where
 
         // Initialise the process.
         let telemetry = telemetry_init(conf.telemetry.clone(), telemetry_options).await?;
-        let shutdown = self
-            .shutdown
+        let mut shutdown = self.shutdown;
+        shutdown
             .logger(telemetry.logger.clone())
             .graceful_shutdown_timeout(Duration::from_secs(conf.runtime.shutdown_grace_sec));
         slog::info!(telemetry.logger, "Process telemetry initialised");
@@ -238,17 +242,17 @@ where
             factory.finalise(app)
         });
         let server = conf.http.apply(server)?;
-        let shutdown = shutdown.watch_actix(server.run(), ());
+        shutdown.watch_actix(server.run(), ());
 
         // Spawn actions execution background task.
         let executor = ActionsExecutor::with_injector(&injector);
         let executor = executor.task(shutdown.shutdown_notification());
-        let shutdown = shutdown.watch_tokio(tokio::spawn(executor));
+        shutdown.watch_tokio(tokio::spawn(executor));
 
         // Spawn store cleaner background task.
         let cleaner = StoreClean::with_injector(&injector);
         let cleaner = cleaner.task(shutdown.shutdown_notification());
-        let shutdown = shutdown.watch_tokio(tokio::spawn(cleaner));
+        shutdown.watch_tokio(tokio::spawn(cleaner));
 
         // Complete shutdown setup and run the agent until an exit condition.
         let exit = shutdown.build();

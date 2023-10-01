@@ -4,7 +4,7 @@ version = "0.1.1"
 description = "All in one SDK to develop Replicante ecosystem components in Rust"
 
 edition = "2021"
-rust-version = "1.68"
+rust-version = "1.70"
 
 homepage = "https://replicante.io"
 license = "MIT"
@@ -50,6 +50,7 @@ agent-framework = [
   "runtime-shutdown_actix",
   "runtime-telemetry",
   "utils-actix_error",
+  "utils-encoding",
   "utils-error_json",
   "utils-error_slog",
   "utils-metrics",
@@ -133,6 +134,8 @@ test-fixtrue = []
 utils-actix_error = ["actix-web", "anyhow", "serde_json", "thiserror"]
 # Provides `actix_web` utilities to capture and export prometheus metrics.
 utils-actix_metrics = ["actix-web", "futures-util", "prometheus", "utils-actix_error"]
+# Utilities to encode and decode advanced types into storable data.
+utils-encoding = ["anyhow", "serde", "time", "thiserror"]
 # Utility function to encode an error into a JSON object.
 utils-error_json = ["anyhow", "serde_json"]
 # Provides a standard way to log errors as slog key/value pairs.

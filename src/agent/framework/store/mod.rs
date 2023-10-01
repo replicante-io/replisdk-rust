@@ -8,7 +8,6 @@ use slog::Logger;
 use tokio_rusqlite::Connection;
 
 mod cleaner;
-mod encoding;
 mod schema;
 mod statements;
 

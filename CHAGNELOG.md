@@ -28,11 +28,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Runtime telemetry initialisation utilities.
 - Runtime utility to manage async process and shutdown.
 - Store Agent models.
+- Utilities to encode and decode data types into or from strings.
 - Utilities to introspect applications and libraries more easley.
 
 ### Changed
 
-- Require Rust `1.68` or later.
+- Require Rust `1.70` or later.
 
 ## 0.1.0 - 2022-10-28
 

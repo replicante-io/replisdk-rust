@@ -340,13 +340,13 @@ impl<T> ShutdownManagerBuilder<T> {
     }
 
     /// Set the maximum amount of time to wait for graceful shutdown to complete.
-    pub fn graceful_shutdown_timeout(mut self, timeout: Duration) -> ShutdownManagerBuilder<T> {
+    pub fn graceful_shutdown_timeout(&mut self, timeout: Duration) -> &mut Self {
         self.grace_duration = timeout;
         self
     }
 
     /// Set the logger used to inform of shutdown events and issues.
-    pub fn logger(mut self, logger: Logger) -> ShutdownManagerBuilder<T> {
+    pub fn logger(&mut self, logger: Logger) -> &mut Self {
         self.exit_logger = Some(logger);
         self
     }
@@ -366,13 +366,13 @@ impl<T> ShutdownManagerBuilder<T> {
     }
 
     /// Watch [`tokio::signal::ctrl_c`] for exit, returning the given value.
-    pub fn watch_signal(mut self, exit_value: Result<T>) -> ShutdownManagerBuilder<T> {
+    pub fn watch_signal(&mut self, exit_value: Result<T>) -> &mut Self {
         self.signal_exit_value = Some(exit_value);
         self
     }
 
     /// Watch a [`tokio::task::JoinHandle`] for exit.
-    pub fn watch_tokio(mut self, task: JoinHandle<Result<T>>) -> ShutdownManagerBuilder<T> {
+    pub fn watch_tokio(&mut self, task: JoinHandle<Result<T>>) -> &mut Self {
         self.tasks.push(task);
         self
     }
@@ -381,11 +381,7 @@ impl<T> ShutdownManagerBuilder<T> {
 #[cfg(feature = "runtime-shutdown_actix")]
 impl<T: Send + 'static> ShutdownManagerBuilder<T> {
     /// Watch [`actix_web::dev::Server`] for exit, returning the given value.
-    pub fn watch_actix(
-        self,
-        server: actix_web::dev::Server,
-        value: T,
-    ) -> ShutdownManagerBuilder<T> {
+    pub fn watch_actix(&mut self, server: actix_web::dev::Server, value: T) -> &mut Self {
         let notification = self.shutdown_notification();
         self.watch_tokio(tokio::spawn(async {
             let handle = server.handle();
@@ -403,7 +399,7 @@ impl<T: Send + 'static> ShutdownManagerBuilder<T> {
 
 impl<T: Default> ShutdownManagerBuilder<T> {
     /// Watch [`tokio::signal::ctrl_c`] for exit, returning the default value of `T`.
-    pub fn watch_signal_with_default(mut self) -> ShutdownManagerBuilder<T> {
+    pub fn watch_signal_with_default(&mut self) -> &mut Self {
         self.signal_exit_value = Some(Ok(T::default()));
         self
     }

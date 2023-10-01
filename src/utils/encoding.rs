@@ -1,4 +1,4 @@
-//! Functions to encode and decode advanced types into storable data.
+//! Utilities to encode and decode advanced types into storable data.
 use anyhow::Context;
 use anyhow::Result;
 use serde::de::DeserializeOwned;
@@ -8,6 +8,7 @@ use time::OffsetDateTime;
 /// Convert nanoseconds from/to u32 to the fractal portion of f64.
 const NANO_SEC_UNIT: f64 = 1_000_000_000.0;
 
+/// Errors when encoding or decoding data.
 #[derive(Debug, thiserror::Error)]
 pub enum EncodeError {
     /// Unable to encode structured data as a JSON string.

@@ -22,11 +22,12 @@ async fn graceful_shutdown_timeout() {
     let task_shutdown = tokio::spawn(async { Ok(()) });
 
     // Wait for shutdown.
-    let shutdown = ShutdownManager::builder()
+    let mut shutdown = ShutdownManager::builder();
+    shutdown
         .graceful_shutdown_timeout(std::time::Duration::from_millis(10))
         .watch_tokio(task_long)
-        .watch_tokio(task_shutdown)
-        .build();
+        .watch_tokio(task_shutdown);
+    let shutdown = shutdown.build();
     let start_time = std::time::Instant::now();
     let _ = shutdown.wait().await;
     let test_duration = start_time.elapsed();
@@ -39,7 +40,7 @@ async fn graceful_shutdown_timeout() {
 
 #[tokio::test]
 async fn shutdown_notifications() {
-    let shutdown = ShutdownManager::builder();
+    let mut shutdown = ShutdownManager::builder();
 
     // Task to wait for exit and send a signal back.
     let exit = shutdown.shutdown_notification();
@@ -55,10 +56,8 @@ async fn shutdown_notifications() {
     let task_shutdown = tokio::spawn(async { Ok(()) });
 
     // Wait for shutdown.
-    let shutdown = shutdown
-        .watch_tokio(task_exit)
-        .watch_tokio(task_shutdown)
-        .build();
+    shutdown.watch_tokio(task_exit).watch_tokio(task_shutdown);
+    let shutdown = shutdown.build();
 
     let test_timeout = std::time::Duration::from_secs(5);
     tokio::select! {
@@ -73,7 +72,11 @@ async fn shutdown_notifications() {
 #[tokio::test]
 async fn wait_for_task() {
     let task = tokio::spawn(async { Ok("test result") });
-    let shutdown = ShutdownManager::builder().watch_tokio(task).build();
+    let shutdown = {
+        let mut shutdown = ShutdownManager::builder();
+        shutdown.watch_tokio(task);
+        shutdown.build()
+    };
     let result = shutdown.wait().await.unwrap();
     assert_eq!(result, "test result");
 }
@@ -86,10 +89,9 @@ async fn wait_for_task_many() {
         Ok("test result")
     });
     let task_two = tokio::spawn(async { anyhow::bail!("test error") });
-    let shutdown = ShutdownManager::builder()
-        .watch_tokio(task_one)
-        .watch_tokio(task_two)
-        .build();
+    let mut shutdown = ShutdownManager::builder();
+    shutdown.watch_tokio(task_one).watch_tokio(task_two);
+    let shutdown = shutdown.build();
     let result = shutdown.wait().await;
     assert!(result.is_err());
 }
@@ -98,7 +100,11 @@ async fn wait_for_task_many() {
 async fn wait_for_task_panic() {
     let task: tokio::task::JoinHandle<anyhow::Result<()>> =
         tokio::spawn(async { panic!("this task panics") });
-    let shutdown = ShutdownManager::builder().watch_tokio(task).build();
+    let shutdown = {
+        let mut shutdown = ShutdownManager::builder();
+        shutdown.watch_tokio(task);
+        shutdown.build()
+    };
     let result = shutdown.wait().await;
     match result {
         Ok(_) => panic!("expected task to report an error"),
