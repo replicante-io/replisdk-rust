@@ -50,14 +50,14 @@ where
     decode_serde(value).map(Some)
 }
 
-/// Decode an [`OffsetDateTime`](time::OffsetDateTime) from an RFC3339 string.
+/// Decode an [`OffsetDateTime`] from an RFC3339 string.
 pub fn decode_time(value: &str) -> Result<OffsetDateTime> {
     OffsetDateTime::parse(value, &time::format_description::well_known::Rfc3339)
         .context(EncodeError::TimeDecode)
         .map_err(anyhow::Error::from)
 }
 
-/// Decode an [`OffsetDateTime`](time::OffsetDateTime) from an f64.
+/// Decode an [`OffsetDateTime`] from an f64.
 ///
 /// The f64 value encodes:
 ///
@@ -71,7 +71,7 @@ pub fn decode_time_f64(value: f64) -> Result<OffsetDateTime> {
     Ok(time)
 }
 
-/// Decode an optional [`OffsetDateTime`](time::OffsetDateTime) from an f64.
+/// Decode an optional [`OffsetDateTime`] from an f64.
 ///
 /// The encoded f64 follows the format described in [`decode_time_f64`].
 pub fn decode_time_option_f64(value: Option<f64>) -> Result<Option<OffsetDateTime>> {
@@ -104,7 +104,7 @@ where
     encode_serde(value).map(Some)
 }
 
-/// Encode an [`OffsetDateTime`](time::OffsetDateTime) into an RFC3339 string.
+/// Encode an [`OffsetDateTime`] into an RFC3339 string.
 pub fn encode_time(value: OffsetDateTime) -> Result<String> {
     value
         .format(&time::format_description::well_known::Rfc3339)
@@ -112,7 +112,7 @@ pub fn encode_time(value: OffsetDateTime) -> Result<String> {
         .map_err(anyhow::Error::from)
 }
 
-/// Encode an [`OffsetDateTime`](time::OffsetDateTime) into an f64.
+/// Encode an [`OffsetDateTime`] into an f64.
 ///
 /// The encoded f64 follows the format described in [`decode_time_f64`].
 pub fn encode_time_f64(value: OffsetDateTime) -> Result<f64> {
@@ -121,7 +121,7 @@ pub fn encode_time_f64(value: OffsetDateTime) -> Result<f64> {
     Ok(unix + (nanos / NANO_SEC_UNIT))
 }
 
-/// Encode an optional [`OffsetDateTime`](time::OffsetDateTime) into an f64.
+/// Encode an optional [`OffsetDateTime`] into an f64.
 ///
 /// The encoded f64 follows the format described in [`decode_time_f64`].
 pub fn encode_time_option_f64(value: Option<OffsetDateTime>) -> Result<Option<f64>> {
