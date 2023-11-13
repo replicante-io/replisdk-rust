@@ -189,6 +189,7 @@ replisdk-proc = { version = "=0.1.1", path = "./proc"}
 
 [dev-dependencies]
 rstest = "^0.18"
+serde_test = "^1.0"
 
 [package.metadata.docs.rs]
 all-features = true

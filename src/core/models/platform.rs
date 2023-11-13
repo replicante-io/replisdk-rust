@@ -1,4 +1,4 @@
-//! Replicante Core platform definition objects and Platform related types.
+//! RepliCore platform definition objects and Platform related types.
 use serde::Deserialize;
 use serde::Serialize;
 
