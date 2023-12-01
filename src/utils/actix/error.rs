@@ -25,6 +25,14 @@ pub struct Error {
 }
 
 impl Error {
+    /// Shortcut for [`Error::with_status`] to generate Bad Bad Request responses.
+    pub fn bad_request<E>(source: E) -> Self
+    where
+        E: Into<anyhow::Error>,
+    {
+        Self::with_status(StatusCode::BAD_REQUEST, source)
+    }
+
     /// Bridge an [`anyhow::Error`] to create responses with a custom status code.
     pub fn with_status<E>(status: StatusCode, source: E) -> Self
     where
