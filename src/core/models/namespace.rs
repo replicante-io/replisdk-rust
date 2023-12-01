@@ -19,16 +19,19 @@ pub struct Namespace {
     pub id: String,
 
     /// Default TLS options used when connecting to resources in the namespace.
+    #[serde(default)]
     pub tls: TlsDefaults,
 
     /// Lifecycle status of the namespace.
+    #[serde(default)]
     pub status: NamespaceStatus,
 }
 
 /// Possible lifecycle states a namespace can be in.
-#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
 pub enum NamespaceStatus {
     /// The namespace and its objects are fully managed.
+    #[default]
     Active,
 
     /// The namespace and its objects are ignored.
