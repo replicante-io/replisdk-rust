@@ -115,8 +115,9 @@ pub mod platform;
 pub mod runtime;
 
 #[cfg(any(
-    feature = "utils-encoding",
     feature = "utils-actix_error",
+    feature = "utils-encoding",
+    feature = "utils-error_json",
     feature = "utils-error_slog",
 ))]
 pub mod utils;

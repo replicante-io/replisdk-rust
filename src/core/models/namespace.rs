@@ -8,7 +8,6 @@ pub struct TlsDefaults {
     /// Optional PEM formatted bundle of CA certificates to validate remote servers.
     #[serde(default)]
     pub ca_bundle: Option<String>,
-
     // TODO: add client_key_secret once secrets storage is solved.
 }
 

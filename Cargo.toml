@@ -137,7 +137,7 @@ utils-actix_metrics = ["actix-web", "futures-util", "prometheus", "utils-actix_e
 # Utilities to encode and decode advanced types into storable data.
 utils-encoding = ["anyhow", "serde", "time", "thiserror"]
 # Utility function to encode an error into a JSON object.
-utils-error_json = ["anyhow", "serde_json"]
+utils-error_json = ["anyhow", "serde_json", "thiserror"]
 # Provides a standard way to log errors as slog key/value pairs.
 utils-error_slog = ["anyhow", "slog"]
 # Utilities to introspect applications and libraries with metrics more easley.
