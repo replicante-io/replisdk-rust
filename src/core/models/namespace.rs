@@ -39,7 +39,7 @@ pub enum NamespaceStatus {
     /// The namespace and its clusters are monitored but actions are forbidden.
     Observed,
 
-    /// THe deletion of the namespace objects was requested and is in progress.
+    /// The deletion of the namespace objects was requested and is in progress.
     ///
     /// For example clusters in the namespace are being deprovisioned.
     Deleting,
@@ -48,4 +48,31 @@ pub enum NamespaceStatus {
     ///
     /// The namespace itself can be deleted at any time.
     Deleted,
+}
+
+impl std::fmt::Display for NamespaceStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            NamespaceStatus::Active => write!(f, "Active"),
+            NamespaceStatus::Inactive => write!(f, "Inactive"),
+            NamespaceStatus::Observed => write!(f, "Observed"),
+            NamespaceStatus::Deleting => write!(f, "Deleting"),
+            NamespaceStatus::Deleted => write!(f, "Deleted"),
+        }
+    }
+}
+
+impl TryFrom<String> for NamespaceStatus {
+    type Error = anyhow::Error;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        match value.as_str() {
+            "Active" => Ok(NamespaceStatus::Active),
+            "Inactive" => Ok(NamespaceStatus::Inactive),
+            "Observed" => Ok(NamespaceStatus::Observed),
+            "Deleting" => Ok(NamespaceStatus::Deleting),
+            "Deleted" => Ok(NamespaceStatus::Deleted),
+            value => Err(anyhow::anyhow!("unsupported namespace status '{value}'")),
+        }
+    }
 }
