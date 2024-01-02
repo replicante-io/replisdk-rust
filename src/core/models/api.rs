@@ -17,6 +17,23 @@ pub struct NamespaceEntry {
 /// Response for the namespace list API endpoint.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct NamespaceList {
-    /// List of namespaces in the cluster.
+    /// List of namespaces on the control plane.
     pub items: Vec<NamespaceEntry>,
+}
+
+/// Definition of entries returned when listing platforms in a namespace.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct PlatformEntry {
+    /// Indicates if the Platform is active or not.
+    pub active: bool,
+
+    /// Namespaced identifier of the Platform.
+    pub name: String,
+}
+
+/// Response for the platform list API endpoint.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct PlatformList {
+    /// List of platform found on the control plane.
+    pub items: Vec<PlatformEntry>,
 }
