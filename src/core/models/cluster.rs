@@ -13,9 +13,9 @@ pub struct ClusterSpec {
     /// Namespace unique ID of the cluster.
     pub cluster_id: String,
 
-    /// Enable or disable orchestrating the cluster.
-    #[serde(default = "ClusterSpec::default_enabled")]
-    pub enabled: bool,
+    /// Activate/deactivate orchestrating the cluster.
+    #[serde(default = "ClusterSpec::default_active")]
+    pub active: bool,
 
     /// Interval, in seconds, between orchestration runs.
     #[serde(default = "ClusterSpec::default_interval")]
@@ -34,14 +34,14 @@ impl ClusterSpec {
         ClusterSpec {
             ns_id,
             cluster_id,
-            enabled: ClusterSpec::default_enabled(),
+            active: ClusterSpec::default_active(),
             interval: ClusterSpec::default_interval(),
         }
     }
 }
 
 impl ClusterSpec {
-    fn default_enabled() -> bool {
+    fn default_active() -> bool {
         true
     }
 
