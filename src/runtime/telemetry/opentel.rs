@@ -1,5 +1,6 @@
 //! OpenTelemetry initialisation related logic.
 use anyhow::Result;
+use opentelemetry::sdk::propagation;
 use opentelemetry::sdk::trace::Sampler as SdkSampler;
 use opentelemetry_otlp::WithExportConfig;
 use serde::Deserialize;
@@ -138,5 +139,14 @@ pub fn initialise(conf: OTelConfig, options: OTelOptions, logger: slog::Logger) 
         pipeline = pipeline.with_batch_config(batch_config);
     }
     pipeline.install_batch(opentelemetry::runtime::Tokio)?;
+
+    // Configure the global text map propagator for contexts to cross process boundaries.
+    let trace = propagation::TraceContextPropagator::new();
+    let baggage = propagation::BaggagePropagator::new();
+    let propagator = propagation::TextMapCompositePropagator::new(vec![
+        Box::new(trace),
+        Box::new(baggage),
+    ]);
+    opentelemetry::global::set_text_map_propagator(propagator);
     Ok(())
 }
