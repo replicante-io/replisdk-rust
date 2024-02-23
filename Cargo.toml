@@ -76,7 +76,14 @@ platform-models = ["serde", "serde_json"]
 # Enable all Replicante Core related features.
 replicore = ["replicore-models"]
 # Enable definitions of replicore data models.
-replicore-models = ["anyhow", "serde", "serde_json"]
+replicore-models = [
+  "anyhow",
+  "serde",
+  "serde_json",
+
+  # Derive core models out of other SDK to limit duplication.
+  "platform-models",
+]
 
 ## Runtime features.
 # Enable all available runtime features.

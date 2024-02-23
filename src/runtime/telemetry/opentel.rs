@@ -143,10 +143,8 @@ pub fn initialise(conf: OTelConfig, options: OTelOptions, logger: slog::Logger) 
     // Configure the global text map propagator for contexts to cross process boundaries.
     let trace = propagation::TraceContextPropagator::new();
     let baggage = propagation::BaggagePropagator::new();
-    let propagator = propagation::TextMapCompositePropagator::new(vec![
-        Box::new(trace),
-        Box::new(baggage),
-    ]);
+    let propagator =
+        propagation::TextMapCompositePropagator::new(vec![Box::new(trace), Box::new(baggage)]);
     opentelemetry::global::set_text_map_propagator(propagator);
     Ok(())
 }
