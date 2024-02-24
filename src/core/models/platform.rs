@@ -60,14 +60,14 @@ impl PlatformDiscoveryOptions {
 /// Supported connection transports to [`Platform`]s.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum PlatformTransport {
-    /// Connect to the platform over HTTP(S).
-    #[serde(rename = "http")]
-    Http(PlatformTransportHttp),
+    /// Connection to the platform is defined in URL format (with schema, host and path components).
+    #[serde(rename = "url")]
+    Url(PlatformTransportUrl),
 }
 
-/// Configuration options for HTTP(S) connection to a Platform.
+/// Configuration options for URL directed connection to a Platform.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub struct PlatformTransportHttp {
+pub struct PlatformTransportUrl {
     /// Base URL to reach the Platform server on.
     pub base_url: String,
 
@@ -75,19 +75,19 @@ pub struct PlatformTransportHttp {
     #[serde(default)]
     pub tls_ca_bundle: Option<String>,
 
-    /// Skip remote certificate validation over HTTPS.
+    /// Skip remote certificate validation.
     ///
-    /// This option disables protection provided by HTTPS certificates
+    /// This option disables protection provided by server certificates
     /// and should only be used for testing.
     ///
-    /// Consider using [`PlatformTransportHttp.tls_ca_bundle`]
+    /// Consider using [`PlatformTransportUrl.tls_ca_bundle`]
     /// to validate custom remote certificate authorities.
-    #[serde(default = "PlatformTransportHttp::default_tls_skip_verify")]
+    #[serde(default = "PlatformTransportUrl::default_tls_skip_verify")]
     pub tls_insecure_skip_verify: bool,
 }
 
-impl PlatformTransportHttp {
-    /// Default value for [`PlatformTransportHttp.tls_insecure_skip_verify`] if not provided.
+impl PlatformTransportUrl {
+    /// Default value for [`PlatformTransportUrl.tls_insecure_skip_verify`] if not provided.
     fn default_tls_skip_verify() -> bool {
         false
     }
