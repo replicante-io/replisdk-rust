@@ -57,6 +57,18 @@ impl PlatformDiscoveryOptions {
     }
 }
 
+/// Reference to a [`Platform`] object defined on the cluster.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct PlatformRef {
+    /// Namespace to look for the [`Platform`] from.
+    ///
+    /// When not set the namespace of the referencing entity is used.
+    ns_id: Option<String>,
+
+    /// Name of the [`Platform`] to reference.
+    name: String,
+}
+
 /// Supported connection transports to [`Platform`]s.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum PlatformTransport {

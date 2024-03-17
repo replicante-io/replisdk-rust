@@ -132,12 +132,7 @@ impl<'de> Deserialize<'de> for Action {
 
         /// Check a `&str` or `String` for validity without allocations.
         fn check_value(v: &str) -> bool {
-            match v.split_once(':') {
-                None => false,
-                Some((scope, _)) if scope.is_empty() => false,
-                Some((_, action)) if action.is_empty() => false,
-                _ => true,
-            }
+            !matches!(v.split_once(':'), None | Some(("", _)) | Some((_, "")))
         }
 
         // Trigger deserialization of an Action.

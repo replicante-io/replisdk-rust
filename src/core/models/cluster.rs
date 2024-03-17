@@ -4,6 +4,9 @@ use serde::Serialize;
 
 const DEFAULT_INTERVAL: i64 = 60;
 
+use crate::core::models::platform::PlatformRef;
+
+pub use crate::platform::models::ClusterDefinition;
 pub use crate::platform::models::ClusterDiscoveryNode;
 
 /// Record of a cluster and all of its nodes as discovered from the Platform the cluster runs on.
@@ -32,9 +35,23 @@ pub struct ClusterSpec {
     #[serde(default = "ClusterSpec::default_active")]
     pub active: bool,
 
+    /// Declaration of what the cluster should look like.
+    ///
+    /// The declaration allows users to state the properties of the cluster and
+    /// enables RepliCore to periodically check reality against this expectation.
+    #[serde(default)]
+    pub declaration: Option<ClusterDefinition>,
+
     /// Interval, in seconds, between orchestration runs.
     #[serde(default = "ClusterSpec::default_interval")]
     pub interval: i64,
+
+    /// Reference to the Platform expected to manage the cluster.
+    ///
+    /// This is required when a `declaration` is set as it references the platform
+    /// used to manage nodes in the cluster.
+    #[serde(default)]
+    pub platform: Option<PlatformRef>,
 }
 
 impl ClusterSpec {
@@ -50,7 +67,9 @@ impl ClusterSpec {
             ns_id,
             cluster_id,
             active: ClusterSpec::default_active(),
+            declaration: None,
             interval: ClusterSpec::default_interval(),
+            platform: None,
         }
     }
 }
