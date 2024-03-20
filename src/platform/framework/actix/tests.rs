@@ -46,11 +46,15 @@ impl IPlatform for FakePlatform {
             nodes: vec![
                 ClusterDiscoveryNode {
                     agent_address: "http://1.a:2345".into(),
+                    node_class: "mock".into(),
                     node_id: "1".into(),
+                    node_group: None,
                 },
                 ClusterDiscoveryNode {
                     agent_address: "http://2.a:2345".into(),
+                    node_class: "mock".into(),
                     node_id: "2".into(),
+                    node_group: None,
                 },
             ],
         };
@@ -59,11 +63,15 @@ impl IPlatform for FakePlatform {
             nodes: vec![
                 ClusterDiscoveryNode {
                     agent_address: "http://1.b:2345".into(),
+                    node_class: "mock".into(),
                     node_id: "1".into(),
+                    node_group: None,
                 },
                 ClusterDiscoveryNode {
                     agent_address: "http://2.b:2345".into(),
+                    node_class: "mock".into(),
                     node_id: "2".into(),
+                    node_group: None,
                 },
             ],
         };

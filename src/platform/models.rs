@@ -87,6 +87,9 @@ pub struct ClusterDiscoveryNode {
     /// It is possible for the agent address to change over the lifetime of a node.
     pub agent_address: String,
 
+    /// Platform specific class of node (such as instance type).
+    pub node_class: String,
+
     /// Platform defined ID on the node.
     ///
     /// A node ID MUST:
@@ -96,6 +99,12 @@ pub struct ClusterDiscoveryNode {
     ///
     /// For example, a good node ID is the instance ID reported by a cloud provider.
     pub node_id: String,
+
+    /// ID of the node group from the cluster declaration.
+    ///
+    /// When nodes are created from a declarative cluster this attribute maps
+    /// to the group name in the declaration and allows converging nodes correctly.
+    pub node_group: Option<String>,
 }
 
 /// API Request schema for a Platform node deprovision action.
