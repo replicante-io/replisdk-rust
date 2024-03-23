@@ -80,6 +80,8 @@ replicore-models = [
   "anyhow",
   "serde",
   "serde_json",
+  "time",
+  "uuid",
 
   # Derive core models out of other SDK to limit duplication.
   "platform-models",
