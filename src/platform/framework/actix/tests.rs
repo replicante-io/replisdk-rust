@@ -149,6 +149,7 @@ async fn provision() {
     }
 },
 "provision": {
+    "count": 1,
     "node_group_id": "default"
 }
     }"#
@@ -196,6 +197,7 @@ fn node_provision_request<S: Into<String>>(group: S) -> NodeProvisionRequest {
             },
         },
         provision: crate::platform::models::NodeProvisionRequestDetails {
+            count: 1,
             node_group_id: group.into(),
         },
     }

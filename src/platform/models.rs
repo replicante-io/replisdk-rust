@@ -130,6 +130,12 @@ pub struct NodeProvisionRequest {
 /// Details of the node(s) to provisions in a NodeProvision action.
 #[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct NodeProvisionRequestDetails {
+    /// Preferred number of nodes to provision with this request.
+    ///
+    /// This value is a preference in that at most this number of nodes will
+    /// be provisioned but less nodes is a valid outcome.
+    pub count: u16,
+
     /// ID of the node group to provision.
     pub node_group_id: String,
 }

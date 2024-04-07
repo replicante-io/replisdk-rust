@@ -99,6 +99,19 @@ impl OAction {
     }
 }
 
+/// Identifier attributes for an [`OAction`].
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+pub struct OActionRef {
+    /// Namespace ID the cluster belongs to.
+    pub ns_id: String,
+
+    /// Namespace unique ID of the cluster.
+    pub cluster_id: String,
+
+    /// Cluster unique ID of the action record.
+    pub action_id: Uuid,
+}
+
 /// Current state of an orchestrator action in its execution lifecycle.
 #[derive(Clone, Copy, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
 pub enum OActionState {

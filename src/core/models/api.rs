@@ -8,6 +8,7 @@ use serde_json::Value as Json;
 use time::OffsetDateTime;
 use uuid::Uuid;
 
+use super::action::ActionApproval;
 use super::namespace::NamespaceStatus;
 use super::oaction::OActionState;
 
@@ -101,6 +102,10 @@ pub struct OActionSpec {
     /// Action-dependent arguments to execute with.
     #[serde(default)]
     pub args: Json,
+
+    /// Automatically grant or explicitly require approval before actions are executed.
+    #[serde(default)]
+    pub approval: ActionApproval,
 
     /// Identifier of the orchestrator action logic to execute.
     pub kind: String,
