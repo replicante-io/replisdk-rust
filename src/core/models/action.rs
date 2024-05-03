@@ -22,6 +22,15 @@ pub enum ActionApproval {
     Required,
 }
 
+impl std::fmt::Display for ActionApproval {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ActionApproval::Granted => write!(f, "granted"),
+            ActionApproval::Required => write!(f, "required"),
+        }
+    }
+}
+
 impl From<ActionApproval> for OActionState {
     fn from(value: ActionApproval) -> Self {
         match value {
