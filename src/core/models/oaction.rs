@@ -97,6 +97,21 @@ impl OAction {
             timeout: None,
         }
     }
+
+    /// Update the [`OAction`] state and apply side effects if needed.
+    ///
+    /// For final states (`Cancelled`, `Done` and `Failed`) this is equivalent to
+    /// [`OAction::finish`].
+    pub fn phase_to(&mut self, phase: OActionState) {
+        if matches!(
+            phase,
+            OActionState::Cancelled | OActionState::Done | OActionState::Failed
+        ) {
+            self.finish(phase);
+            return;
+        }
+        self.state = phase;
+    }
 }
 
 /// Identifier attributes for an [`OAction`].

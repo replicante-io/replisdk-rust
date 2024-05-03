@@ -51,7 +51,7 @@ impl ActionExecution {
         self.finished_time = Some(time::OffsetDateTime::now_utc());
     }
 
-    /// Update the [`ActionExecution`] phase and apply side effects.
+    /// Update the [`ActionExecution`] phase and apply side effects if needed.
     ///
     /// For final states (`Done` and `Failed`) this is equivalent to [`ActionExecution::finish`].
     pub fn phase_to(&mut self, phase: ActionExecutionPhase) {
