@@ -1,5 +1,5 @@
 //! Models to describe Orchestrator Actions.
-//! 
+//!
 //! Orchestrator actions are performed at the Control Plane level rather then node level.
 //! Control Plane in this case doesn't exclusively mean RepliCore but any action that executes
 //! outside of individual nodes.

@@ -63,10 +63,10 @@ pub struct PlatformRef {
     /// Namespace to look for the [`Platform`] from.
     ///
     /// When not set the namespace of the referencing entity is used.
-    ns_id: Option<String>,
+    pub ns_id: Option<String>,
 
     /// Name of the [`Platform`] to reference.
-    name: String,
+    pub name: String,
 }
 
 /// Supported connection transports to [`Platform`]s.
