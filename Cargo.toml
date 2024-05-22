@@ -4,7 +4,7 @@ version = "0.1.1"
 description = "All in one SDK to develop Replicante ecosystem components in Rust"
 
 edition = "2021"
-rust-version = "1.70"
+rust-version = "1.75"
 
 homepage = "https://replicante.io"
 license = "MIT"
@@ -136,7 +136,7 @@ runtime-tokio_conf = ["serde", "tokio"]
 
 ## Testing features
 # Enable test fixtures defined by other features.
-test-fixtrue = []
+test-fixture = []
 
 ## Various utilities and common tasks.
 # Provides an `actix_web` error type that works with `anyhow::Error`.

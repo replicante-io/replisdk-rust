@@ -17,5 +17,5 @@ for_version() {
 }
 
 for_version "stable"
-for_version "1.70.0"
+for_version "1.75.0"
 for_version "nightly"
