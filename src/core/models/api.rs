@@ -88,6 +88,8 @@ pub struct OActionEntry {
 ///
 /// - A new UUID can be auto-created.
 /// - The action state has to be new and can't be set by users.
+///
+/// [`OAction`]: crate::core::models::oaction::OAction
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct OActionSpec {
     /// Namespace the cluster is in.

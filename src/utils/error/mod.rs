@@ -1,4 +1,7 @@
 //! Utilities to deal with errors.
+#[cfg(feature = "utils-error_json")]
+use anyhow::Context;
+
 #[cfg(feature = "utils-error_slog")]
 pub mod slog;
 
@@ -15,6 +18,14 @@ pub struct RemoteError {
 impl From<&str> for RemoteError {
     fn from(value: &str) -> Self {
         let message = value.to_string();
+        RemoteError { message }
+    }
+}
+
+#[cfg(feature = "utils-error_json")]
+impl From<String> for RemoteError {
+    fn from(value: String) -> Self {
+        let message = value;
         RemoteError { message }
     }
 }
@@ -45,11 +56,9 @@ pub fn from_json(payload: serde_json::Value) -> anyhow::Result<anyhow::Error> {
 
     // If the error has a trail use that for everything.
     if let Some(trail) = payload.get("error_trail") {
-        let trail = trail
-            .as_str()
-            .ok_or_else(|| anyhow::anyhow!("error_trail must be a string").context(DecodeError))?;
-        let trail = trail.split("\n  ");
+        let trail: Vec<String> = serde_json::from_value(trail.clone()).context(DecodeError)?;
         let mut trail: Vec<_> = trail
+            .into_iter()
             .map(|error| anyhow::anyhow!(RemoteError::from(error)))
             .collect();
         trail.reverse();
@@ -105,7 +114,6 @@ pub fn into_json(error: anyhow::Error) -> serde_json::Value {
     // Emit the full error trail where intermediate messages are present.
     let error_trail: Vec<String> = error.chain().map(ToString::to_string).collect();
     if error_trail.len() > 2 {
-        let error_trail = error_trail.join("\n  ");
         document.insert("error_trail".into(), error_trail.into());
     }
 
@@ -155,10 +163,12 @@ Caused by:
             "error": true,
             "error_msg": "msg",
             "error_cause": "cause",
-            "error_trail": r#"trail msg
-  trail step 1
-  trail step 2
-  trail cause"#,
+            "error_trail": [
+                "trail msg",
+                "trail step 1",
+                "trail step 2",
+                "trail cause",
+            ]
         });
         let error = super::from_json(payload).unwrap();
         let error = format!("{:?}", error);
