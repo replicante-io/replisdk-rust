@@ -4,5 +4,6 @@ pub mod api;
 pub mod auth;
 pub mod cluster;
 pub mod namespace;
+pub mod node;
 pub mod oaction;
 pub mod platform;

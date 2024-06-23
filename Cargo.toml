@@ -84,6 +84,7 @@ replicore-models = [
   "uuid",
 
   # Derive core models out of other SDK to limit duplication.
+  "agent-models",
   "platform-models",
 ]
 
