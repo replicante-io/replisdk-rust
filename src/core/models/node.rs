@@ -5,6 +5,8 @@ use serde::Serialize;
 use crate::agent::models::AgentVersion;
 use crate::agent::models::AttributesMap;
 use crate::agent::models::NodeStatus as AgentNodeStatus;
+use crate::agent::models::ShardCommitOffset;
+use crate::agent::models::ShardRole;
 use crate::agent::models::StoreVersion;
 
 /// Information about a Store's node.
@@ -100,6 +102,48 @@ impl From<AgentNodeStatus> for NodeStatus {
             AgentNodeStatus::Healthy => Self::Healthy,
             AgentNodeStatus::Unknown(data) => Self::Unknown(data),
         }
+    }
+}
+
+/// Information about a shard located on a node in the cluster.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct Shard {
+    // ID attributes.
+    /// Namespace ID the cluster belongs to.
+    pub ns_id: String,
+
+    /// Namespace unique ID of the cluster.
+    pub cluster_id: String,
+
+    /// Unique identifier of the node, as reported by the Platform provider the node is running on.
+    pub node_id: String,
+
+    /// Identifier of the specific data shard.
+    pub shard_id: String,
+
+    // Record attributes.
+    /// Current offset committed to permanent storage for the shard.
+    pub commit_offset: ShardCommitOffset,
+
+    /// True when the shard was successfully fetched by the latest node sync.   
+    pub fresh: bool,
+
+    /// Lag between this shard commit offset and its matching primary commit offset.
+    pub lag: Option<ShardCommitOffset>,
+
+    /// The role of the node with regards to shard management.
+    pub role: ShardRole,
+}
+
+impl Shard {
+    /// Compare self with another [`Shard`] excluding commit offset fields.
+    pub fn same(&self, other: &Shard) -> bool {
+        self.ns_id == other.ns_id
+            && self.cluster_id == other.cluster_id
+            && self.node_id == other.node_id
+            && self.shard_id == other.shard_id
+            && self.fresh == other.fresh
+            && self.role == other.role
     }
 }
 

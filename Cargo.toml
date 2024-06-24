@@ -197,7 +197,7 @@ tokio-rusqlite = { version = "^0.5", optional = true }
 replisdk-proc = { version = "=0.1.1", path = "./proc"}
 
 [dev-dependencies]
-rstest = "^0.19"
+rstest = "^0.21"
 serde_test = "^1.0"
 
 [package.metadata.docs.rs]
