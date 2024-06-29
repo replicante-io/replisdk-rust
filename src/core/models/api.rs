@@ -9,6 +9,7 @@ use time::OffsetDateTime;
 use uuid::Uuid;
 
 use super::action::ActionApproval;
+use super::naction::NActionPhase;
 use super::namespace::NamespaceStatus;
 use super::oaction::OActionState;
 
@@ -42,6 +43,36 @@ pub struct ClusterSpecEntry {
 
     /// Activate/deactivate orchestrating the cluster.
     pub active: bool,
+}
+
+/// Definition of entries returned when listing node actions.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct NActionEntry {
+    /// Namespace the cluster is in.
+    pub ns_id: String,
+
+    /// Namespaced identifier of the cluster.
+    pub cluster_id: String,
+
+    /// Node in the cluster the action is targeting.
+    pub node_id: String,
+
+    /// Identifier of the action.
+    pub action_id: Uuid,
+
+    /// Timestamp of action creation.
+    #[serde(with = "time::serde::rfc3339")]
+    pub created_time: OffsetDateTime,
+
+    /// Timestamp action entered a final state (success or failure).
+    #[serde(default, with = "time::serde::rfc3339::option")]
+    pub finished_time: Option<OffsetDateTime>,
+
+    /// Identifier of the node action logic to execute.
+    pub kind: String,
+
+    /// State the action is currently in.
+    pub state: NActionPhase,
 }
 
 /// Definition of entries returned when listing namespaces.
