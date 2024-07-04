@@ -117,6 +117,17 @@ pub async fn schedule(
         }
     }
 
+    // Reject scheduling requests with an ID we already know.
+    if let Some(action_id) = action.id {
+        let query = store::query::Action::new(action_id);
+        let known = service.store.query(&context, query).await?;
+        if known.is_some() {
+            let error = anyhow::anyhow!("The action ID is already used by another action");
+            let error = Error::with_status(actix_web::http::StatusCode::CONFLICT, error);
+            return Err(error);
+        }
+    }
+
     // Store the action in the DB.
     let action = ActionExecution::from(action.into_inner());
     let id = action.id;
