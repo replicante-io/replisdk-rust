@@ -21,9 +21,43 @@ pub struct Namespace {
     #[serde(default)]
     pub tls: TlsDefaults,
 
+    /// Settings for operations on the namespace of objects within it.
+    #[serde(default)]
+    pub settings: NamespaceSettings,
+
     /// Lifecycle status of the namespace.
     #[serde(default)]
     pub status: NamespaceStatus,
+}
+
+/// Settings for operations on the namespace of objects within it.
+#[derive(Clone, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
+pub struct NamespaceSettings {
+    /// Settings for cluster orchestration tasks.
+    #[serde(default)]
+    pub orchestrate: NamespaceSettingsOrchestrate,
+}
+
+/// Settings for cluster orchestration tasks.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct NamespaceSettingsOrchestrate {
+    /// Maximum number of attempts to schedule and node action before it is failed.
+    #[serde(default = "NamespaceSettingsOrchestrate::default_max_node_schedule_attempts")]
+    pub max_naction_schedule_attempts: u16,
+}
+
+impl NamespaceSettingsOrchestrate {
+    fn default_max_node_schedule_attempts() -> u16 {
+        5
+    }
+}
+
+impl Default for NamespaceSettingsOrchestrate {
+    fn default() -> Self {
+        Self {
+            max_naction_schedule_attempts: Self::default_max_node_schedule_attempts(),
+        }
+    }
 }
 
 /// Possible lifecycle states a namespace can be in.
