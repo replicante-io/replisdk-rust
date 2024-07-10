@@ -53,8 +53,8 @@ pub struct NAction {
     pub metadata: BTreeMap<String, String>,
 
     /// Time the agent recorded the action execution in its own store.
-    #[serde(with = "time::serde::rfc3339")]
-    pub scheduled_time: OffsetDateTime,
+    #[serde(with = "time::serde::rfc3339::option")]
+    pub scheduled_time: Option<OffsetDateTime>,
 
     /// Current state of an Agent Action execution.
     pub state: NActionState,
@@ -116,6 +116,21 @@ pub enum NActionPhase {
     Running,
 }
 
+impl std::fmt::Display for NActionPhase {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Self::Cancelled => write!(f, "CANCELLED"),
+            Self::Done => write!(f, "DONE"),
+            Self::Failed => write!(f, "FAILED"),
+            Self::Lost => write!(f, "LOST"),
+            Self::New => write!(f, "NEW"),
+            Self::PendingApprove => write!(f, "PENDING_APPROVE"),
+            Self::PendingSchedule => write!(f, "PENDING_SCHEDULE"),
+            Self::Running => write!(f, "RUNNING"),
+        }
+    }
+}
+
 impl NActionPhase {
     /// Check if the action is in a final state (done, failed, ...).
     pub fn is_final(&self) -> bool {
@@ -140,6 +155,22 @@ impl From<ActionExecutionPhase> for NActionPhase {
             ActionExecutionPhase::Running => Self::Running,
         }
     }
+}
+
+/// Identifier attributes for a [`NAction`].
+#[derive(Clone, Eq, PartialEq, Hash, Debug, Serialize, Deserialize)]
+pub struct NActionRef {
+    /// Namespace ID the cluster belongs to.
+    pub ns_id: String,
+
+    /// Namespace unique ID of the cluster.
+    pub cluster_id: String,
+
+    /// Node ID the action targets.
+    pub node_id: String,
+
+    /// Cluster unique ID of the action record.
+    pub action_id: Uuid,
 }
 
 /// State of a Node Action execution.

@@ -23,6 +23,9 @@ pub struct EntriesList<T> {
 /// Response for the cluster spec list API endpoint.
 pub type ClusterSpecList = EntriesList<ClusterSpecEntry>;
 
+/// Response for the naction list API endpoint.
+pub type NActionList = EntriesList<NActionEntry>;
+
 /// Response for the namespace list API endpoint.
 pub type NamespaceList = EntriesList<NamespaceEntry>;
 
@@ -71,8 +74,48 @@ pub struct NActionEntry {
     /// Identifier of the node action logic to execute.
     pub kind: String,
 
-    /// State the action is currently in.
+    /// Phase the action is currently in.
+    #[serde(deserialize_with = "deserialize::naction_entry_state")]
     pub state: NActionPhase,
+}
+
+/// Specification of [`NAction`] for the apply interface.
+///
+/// The apply interface creates new actions and not all fields in [`NAction`] records
+/// are needed or should be provided by users. For example:
+///
+/// - A new UUID can be auto-created.
+/// - The action state has to be new and can't be set by users.
+///
+/// [`NAction`]: crate::core::models::naction::NAction
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct NActionSpec {
+    /// Namespace the cluster is in.
+    pub ns_id: String,
+
+    /// Namespaced identifier of the cluster.
+    pub cluster_id: String,
+
+    /// Identifier of the node the action is for.
+    pub node_id: String,
+
+    /// Identifier of the action.
+    pub action_id: Option<Uuid>,
+
+    /// Action-dependent arguments to execute with.
+    #[serde(default)]
+    pub args: Json,
+
+    /// Automatically grant or explicitly require approval before actions are executed.
+    #[serde(default)]
+    pub approval: ActionApproval,
+
+    /// Identifier of the orchestrator action logic to execute.
+    pub kind: String,
+
+    /// Additional unstructured metadata attached to the action.
+    #[serde(default)]
+    pub metadata: BTreeMap<String, String>,
 }
 
 /// Definition of entries returned when listing namespaces.
@@ -162,4 +205,35 @@ pub struct PlatformEntry {
 
     /// Namespaced identifier of the Platform.
     pub name: String,
+}
+
+mod deserialize {
+    use serde::Deserialize;
+    use serde::de::Deserializer;
+
+    use super::super::naction::NActionPhase;
+    use super::super::naction::NActionState;
+
+    /// Helper type to decode node action phase for NActionEntry objects.
+    #[derive(Debug, Deserialize)]
+    #[serde(untagged)]
+    enum NActionPhaseOrState {
+        /// Deserialize the phase directly.
+        Phase(NActionPhase),
+
+        /// Deserialize the phase for the nested state type.
+        State(NActionState),
+    }
+
+    /// Decode a node action phase either directly or from a nested [`NActionState`].
+    pub fn naction_entry_state<'a, D>(deserializer: D) -> Result<NActionPhase, D::Error>
+    where
+        D: Deserializer<'a>,
+    {
+        let value = NActionPhaseOrState::deserialize(deserializer)?;
+        match value {
+            NActionPhaseOrState::Phase(phase) => Ok(phase),
+            NActionPhaseOrState::State(state) => Ok(state.phase),
+        }
+    }
 }

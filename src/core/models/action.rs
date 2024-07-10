@@ -2,6 +2,7 @@
 use serde::Deserialize;
 use serde::Serialize;
 
+use super::naction::NActionPhase;
 use super::oaction::OActionState;
 
 /// Automatically grant or explicitly require approval before actions are executed.
@@ -36,6 +37,15 @@ impl From<ActionApproval> for OActionState {
         match value {
             ActionApproval::Granted => OActionState::PendingSchedule,
             ActionApproval::Required => OActionState::PendingApprove,
+        }
+    }
+}
+
+impl From<ActionApproval> for NActionPhase {
+    fn from(value: ActionApproval) -> Self {
+        match value {
+            ActionApproval::Granted => NActionPhase::PendingSchedule,
+            ActionApproval::Required => NActionPhase::PendingApprove,
         }
     }
 }
