@@ -24,7 +24,7 @@ use slog::SendSyncRefUnwindSafeKV;
 
 #[cfg(feature = "actix-web")]
 mod actix;
-#[cfg(any(feature = "opentelemetry", feature = "opentelemetry_api"))]
+#[cfg(feature = "opentelemetry")]
 mod otel;
 
 #[cfg(feature = "actix-web")]

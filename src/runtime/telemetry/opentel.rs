@@ -1,7 +1,8 @@
 //! OpenTelemetry initialisation related logic.
 use anyhow::Result;
-use opentelemetry::sdk::propagation;
-use opentelemetry::sdk::trace::Sampler as SdkSampler;
+use opentelemetry::propagation::TextMapCompositePropagator;
+use opentelemetry_sdk::propagation;
+use opentelemetry_sdk::trace::Sampler as SdkSampler;
 use opentelemetry_otlp::WithExportConfig;
 use serde::Deserialize;
 use serde::Serialize;
@@ -47,10 +48,10 @@ impl OTelConfig {
 #[derive(Default)]
 pub struct OTelOptions {
     /// Configuration for the batch exporter.
-    pub batch_config: Option<opentelemetry::sdk::trace::BatchConfig>,
+    pub batch_config: Option<opentelemetry_sdk::trace::BatchConfig>,
 
     /// Attributes representing the process that produces telemetry data.
-    pub resource: opentelemetry::sdk::Resource,
+    pub resource: opentelemetry_sdk::Resource,
 }
 
 /// Trace sampling configuration.
@@ -128,7 +129,7 @@ pub fn initialise(conf: OTelConfig, options: OTelOptions, logger: slog::Logger) 
     }
 
     // Create and configure OTel Pipeline.
-    let pipeline_conf = opentelemetry::sdk::trace::config()
+    let pipeline_conf = opentelemetry_sdk::trace::Config::default()
         .with_sampler(SdkSampler::from(conf.sampling))
         .with_resource(options.resource);
     let mut pipeline = opentelemetry_otlp::new_pipeline()
@@ -138,13 +139,12 @@ pub fn initialise(conf: OTelConfig, options: OTelOptions, logger: slog::Logger) 
     if let Some(batch_config) = options.batch_config {
         pipeline = pipeline.with_batch_config(batch_config);
     }
-    pipeline.install_batch(opentelemetry::runtime::Tokio)?;
+    pipeline.install_batch(opentelemetry_sdk::runtime::Tokio)?;
 
     // Configure the global text map propagator for contexts to cross process boundaries.
     let trace = propagation::TraceContextPropagator::new();
     let baggage = propagation::BaggagePropagator::new();
-    let propagator =
-        propagation::TextMapCompositePropagator::new(vec![Box::new(trace), Box::new(baggage)]);
+    let propagator = TextMapCompositePropagator::new(vec![Box::new(trace), Box::new(baggage)]);
     opentelemetry::global::set_text_map_propagator(propagator);
     Ok(())
 }

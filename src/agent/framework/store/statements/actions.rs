@@ -1,7 +1,7 @@
 //! Implementation of the actions portion of the store interface.
 use anyhow::Context;
 use anyhow::Result;
-use opentelemetry_api::trace::FutureExt;
+use opentelemetry::trace::FutureExt;
 use tokio_rusqlite::Connection;
 
 use super::StatementError;

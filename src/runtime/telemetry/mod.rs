@@ -89,7 +89,8 @@
 //! - [`SentryOptions::in_app_include`]: a list of module prefixes for Sentry to consider part
 //!   of the instrumented applications.
 use anyhow::Result;
-use opentelemetry::sdk::Resource;
+use opentelemetry::KeyValue;
+use opentelemetry_sdk::Resource;
 use opentelemetry_semantic_conventions::resource::SERVICE_NAME;
 use opentelemetry_semantic_conventions::resource::SERVICE_VERSION;
 use serde::Deserialize;
@@ -200,7 +201,10 @@ impl TelemetryOptionsBuilder {
 
     /// Configure OpenTelemetry service metadata.
     pub fn for_app(mut self, app: &'static str, version: &'static str) -> Self {
-        let resource = Resource::new([SERVICE_NAME.string(app), SERVICE_VERSION.string(version)]);
+        let resource = Resource::new([
+            KeyValue::new(SERVICE_NAME, app),
+            KeyValue::new(SERVICE_VERSION, version),
+        ]);
         self.otel.resource = self.otel.resource.merge(&resource);
         self
     }

@@ -49,7 +49,7 @@ where
         }
 
         // If open telemetry is available for this build also attach traces to logs.
-        #[cfg(any(feature = "opentelemetry", feature = "opentelemetry_api"))]
+        #[cfg(feature = "opentelemetry")]
         {
             let add_trace_id = config
                 .as_ref()
@@ -106,14 +106,14 @@ impl FromRequest for Context {
 
 /// Configuration of the per-request [`Context`] derivation process.
 pub struct ContextConfig {
-    #[cfg(any(feature = "opentelemetry", feature = "opentelemetry_api"))]
+    #[cfg(feature = "opentelemetry")]
     add_trace_id: bool,
     hooks: Vec<Box<dyn Fn(ContextBuilder) -> ContextBuilder>>,
 }
 
 impl ContextConfig {
     /// Enable or disable adding the current trace ID to logs (if a trace ID is available).
-    #[cfg(any(feature = "opentelemetry", feature = "opentelemetry_api"))]
+    #[cfg(feature = "opentelemetry")]
     pub fn add_trace_id(mut self, add: bool) -> Self {
         self.add_trace_id = add;
         self

@@ -3,7 +3,7 @@ use std::future::Future;
 use std::time::Duration;
 
 use anyhow::Result;
-use opentelemetry_api::trace::FutureExt;
+use opentelemetry::trace::FutureExt;
 
 use super::Store;
 use crate::agent::framework::store::manage;

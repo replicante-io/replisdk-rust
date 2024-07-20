@@ -4,7 +4,7 @@ use std::time::Duration;
 
 use anyhow::Error;
 use anyhow::Result;
-use opentelemetry_api::trace::FutureExt;
+use opentelemetry::trace::FutureExt;
 
 use crate::agent::framework::actions::ActionHandlerChangeValue;
 use crate::agent::framework::actions::ActionsRegistry;

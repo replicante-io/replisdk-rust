@@ -6,10 +6,10 @@ use std::task::Context as TaskContext;
 use std::task::Poll;
 
 use anyhow::Error;
-use opentelemetry_api::trace::Status;
-use opentelemetry_api::trace::TraceContextExt;
-use opentelemetry_api::Context;
-use opentelemetry_api::KeyValue;
+use opentelemetry::trace::Status;
+use opentelemetry::trace::TraceContextExt;
+use opentelemetry::Context;
+use opentelemetry::KeyValue;
 
 // --- Trait definitions for sync errors --- //
 /// Extend [`Result`]s with [`anyhow::Error`]s to trace occurred errors.
@@ -240,9 +240,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use opentelemetry_api::trace::FutureExt;
-    use opentelemetry_api::trace::TraceContextExt;
-    use opentelemetry_api::trace::Tracer;
+    use opentelemetry::trace::FutureExt;
+    use opentelemetry::trace::TraceContextExt;
+    use opentelemetry::trace::Tracer;
 
     use super::TraceErrExt;
     use super::TraceFutureErrExt;
@@ -255,9 +255,9 @@ mod tests {
 
     #[test]
     fn trace_error() {
-        let tracer = opentelemetry_api::global::tracer("test");
+        let tracer = opentelemetry::global::tracer("test");
         let span = tracer.start("test");
-        let context = opentelemetry_api::Context::current();
+        let context = opentelemetry::Context::current();
         let context = context.with_span(span);
         let _guard = context.clone().attach();
 
@@ -267,9 +267,9 @@ mod tests {
 
     #[tokio::test]
     async fn trace_future_error() {
-        let tracer = opentelemetry_api::global::tracer("test");
+        let tracer = opentelemetry::global::tracer("test");
         let span = tracer.start("test");
-        let context = opentelemetry_api::Context::current();
+        let context = opentelemetry::Context::current();
         let context = context.with_span(span);
 
         let error = async {
@@ -281,9 +281,9 @@ mod tests {
 
     #[tokio::test]
     async fn trace_future_std_error() {
-        let tracer = opentelemetry_api::global::tracer("test");
+        let tracer = opentelemetry::global::tracer("test");
         let span = tracer.start("test");
-        let context = opentelemetry_api::Context::current();
+        let context = opentelemetry::Context::current();
         let context = context.with_span(span);
 
         let error = async {
@@ -295,9 +295,9 @@ mod tests {
 
     #[test]
     fn trace_std_error() {
-        let tracer = opentelemetry_api::global::tracer("test");
+        let tracer = opentelemetry::global::tracer("test");
         let span = tracer.start("test");
-        let context = opentelemetry_api::Context::current();
+        let context = opentelemetry::Context::current();
         let context = context.with_span(span);
         let _guard = context.clone().attach();
 

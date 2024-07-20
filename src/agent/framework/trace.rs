@@ -1,19 +1,17 @@
 //! Helpers for Agent SDK tracing.
-use opentelemetry_api::global::BoxedTracer;
-use opentelemetry_api::trace::SpanKind;
-use opentelemetry_api::trace::TraceContextExt;
-use opentelemetry_api::trace::Tracer;
-use opentelemetry_api::trace::TracerProvider;
-use opentelemetry_api::Context;
+use opentelemetry::global::BoxedTracer;
+use opentelemetry::trace::SpanKind;
+use opentelemetry::trace::TraceContextExt;
+use opentelemetry::trace::Tracer;
+use opentelemetry::trace::TracerProvider;
+use opentelemetry::Context;
 
 /// Short-hand to create a tracer for the Agent SDK library.
 pub fn tracer() -> BoxedTracer {
-    opentelemetry_api::global::tracer_provider().versioned_tracer(
-        env!("CARGO_PKG_NAME"),
-        Some(env!("CARGO_PKG_VERSION")),
-        Option::<&str>::None,
-        None,
-    )
+    opentelemetry::global::tracer_provider()
+        .tracer_builder(env!("CARGO_PKG_NAME"))
+        .with_version(env!("CARGO_PKG_VERSION"))
+        .build()
 }
 
 /// Initialised a new span and context for Agent Store operations,

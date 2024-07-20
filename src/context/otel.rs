@@ -1,15 +1,8 @@
 //! Additional [`Context`] feature to integrate with Open Telemetry.
 // Support OpenTelemetry both via the API layer or the full SDK.
-#[cfg(all(feature = "opentelemetry", not(feature = "opentelemetry_api")))]
-use {
-    opentelemetry::trace::TraceContextExt, opentelemetry::trace::TraceId,
-    opentelemetry::Context as OtelContext,
-};
-#[cfg(feature = "opentelemetry_api")]
-use {
-    opentelemetry_api::trace::TraceContextExt, opentelemetry_api::trace::TraceId,
-    opentelemetry_api::Context as OtelContext,
-};
+use opentelemetry::trace::TraceContextExt;
+use opentelemetry::trace::TraceId;
+use opentelemetry::Context as OtelContext;
 
 use super::ContextBuilder;
 

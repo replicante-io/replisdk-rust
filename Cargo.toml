@@ -30,7 +30,7 @@ agent-framework = [
   "async-trait",
   "once_cell",
   "openssl",
-  "opentelemetry_api",
+  "opentelemetry",
   "prometheus",
   "refinery",
   "rusqlite",
@@ -116,6 +116,7 @@ runtime-shutdown_actix = ["actix-web"]
 runtime-telemetry = [
   "anyhow",
   "opentelemetry",
+  "opentelemetry_sdk",
   "opentelemetry-otlp",
   "opentelemetry-semantic-conventions",
   "prometheus",
@@ -153,28 +154,28 @@ utils-error_slog = ["anyhow", "slog"]
 # Utilities to introspect applications and libraries with metrics more easley.
 utils-metrics = ["prometheus"]
 # Utilities to introspect applications and libraries with traces more easley.
-utils-trace = ["anyhow", "opentelemetry_api", "pin-project-lite"]
+utils-trace = ["anyhow", "opentelemetry", "pin-project-lite"]
 
 [dependencies]
 actix-http = { version = "^3.0", optional = true }
 actix-service = { version = "^2.0", optional = true }
 actix-web = { version = "^4.3", optional = true }
-actix-web-opentelemetry = { version = "^0.15", optional = true, features = ["sync-middleware"] }
+actix-web-opentelemetry = { version = "^0.18", optional = true, features = ["sync-middleware"] }
 anyhow = { version = "^1.0", features = ["backtrace"], optional = true }
 async-trait = { version = "^0.1", optional = true }
 futures = { version = "^0.3", optional = true }
 futures-util = { version = "^0.3", optional = true }
 once_cell = { version = "^1.18", optional = true }
 openssl = { version = "^0.10", optional = true }
-opentelemetry = { version = "^0.20", optional = true, features = ["rt-tokio"] }
-opentelemetry_api = { version = "^0.20", optional = true }
-opentelemetry-otlp = { version = "^0.13", optional = true }
-opentelemetry-semantic-conventions = { version = "^0.12", optional = true }
+opentelemetry = { version = "^0.24", optional = true }
+opentelemetry_sdk = { version = "^0.24", optional = true, features = ["rt-tokio"] }
+opentelemetry-otlp = { version = "^0.17", optional = true }
+opentelemetry-semantic-conventions = { version = "^0.16", optional = true }
 pin-project-lite = { version = "^0.2", optional = true }
 prometheus = { version = "^0.13", optional = true, features = ["process"] }
 refinery = { version = "^0.8", optional = true, features = ["rusqlite"] }
 rusqlite = { version = "^0.31", optional = true, features = ["bundled"] }
-sentry = { version = "^0.32", optional = true }
+sentry = { version = "^0.34", optional = true }
 serde = { version = "^1.0", optional = true, features = ["derive"] }
 serde_json = { version = "^1.0", optional = true }
 serde_yaml = { version = "^0.9", optional = true }
