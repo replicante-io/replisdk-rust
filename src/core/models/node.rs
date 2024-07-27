@@ -35,8 +35,8 @@ impl<'a> From<&'a AttributeValue> for AttributeValueRef<'a> {
         match value {
             AttributeValue::Boolean(value) => AttributeValueRef::Boolean(*value),
             AttributeValue::Null => AttributeValueRef::Null,
-            AttributeValue::Number(value) => AttributeValueRef::Number(&value),
-            AttributeValue::String(value) => AttributeValueRef::String(&value),
+            AttributeValue::Number(value) => AttributeValueRef::Number(value),
+            AttributeValue::String(value) => AttributeValueRef::String(value),
         }
     }
 }
@@ -110,7 +110,10 @@ impl Node {
             "cluster_id" => Some(AttributeValueRef::String(&self.cluster_id)),
             "node_id" => Some(AttributeValueRef::String(&self.node_id)),
             "node_status" => Some(AttributeValueRef::String(self.node_status.as_ref())),
-            _ => self.details.as_ref().and_then(|details| details.attribute(attribute)),
+            _ => self
+                .details
+                .as_ref()
+                .and_then(|details| details.attribute(attribute)),
         }
     }
 }
@@ -139,20 +142,23 @@ pub struct NodeDetails {
 impl NodeDetails {
     /// Continue [`Node::attribute`] logic for `NodeDetails` fields and attributes.
     fn attribute(&self, attribute: &str) -> Option<AttributeValueRef> {
-        let attribute = attribute.as_ref();
         match attribute {
             "agent_version" => Some(AttributeValueRef::String(&self.agent_version.number)),
-            "agent_version.checkout" => Some(AttributeValueRef::String(&self.agent_version.checkout)),
+            "agent_version.checkout" => {
+                Some(AttributeValueRef::String(&self.agent_version.checkout))
+            }
             "agent_version.number" => Some(AttributeValueRef::String(&self.agent_version.number)),
             "agent_version.taint" => Some(AttributeValueRef::String(&self.agent_version.taint)),
             "store_id" => Some(AttributeValueRef::String(&self.store_id)),
             "store_version" => Some(AttributeValueRef::String(&self.store_version.number)),
-            "store_version.checkout" => self.store_version
+            "store_version.checkout" => self
+                .store_version
                 .checkout
                 .as_ref()
                 .map(|checkout| AttributeValueRef::String(checkout)),
             "store_version.number" => Some(AttributeValueRef::String(&self.store_version.number)),
-            "store_version.extra" => self.store_version
+            "store_version.extra" => self
+                .store_version
                 .extra
                 .as_ref()
                 .map(|extra| AttributeValueRef::String(extra)),
@@ -307,7 +313,7 @@ impl AsRef<str> for NodeStatus {
             NodeStatus::LeavingCluster => "LEAVING_CLUSTER",
             NodeStatus::Unhealthy => "UNHEALTHY",
             NodeStatus::Healthy => "HEALTHY",
-            NodeStatus::Unknown(status) => &status,
+            NodeStatus::Unknown(status) => status,
         }
     }
 }

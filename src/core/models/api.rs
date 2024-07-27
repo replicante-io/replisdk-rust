@@ -208,8 +208,8 @@ pub struct PlatformEntry {
 }
 
 mod deserialize {
-    use serde::Deserialize;
     use serde::de::Deserializer;
+    use serde::Deserialize;
 
     use super::super::naction::NActionPhase;
     use super::super::naction::NActionState;

@@ -1,9 +1,9 @@
 //! OpenTelemetry initialisation related logic.
 use anyhow::Result;
 use opentelemetry::propagation::TextMapCompositePropagator;
+use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::propagation;
 use opentelemetry_sdk::trace::Sampler as SdkSampler;
-use opentelemetry_otlp::WithExportConfig;
 use serde::Deserialize;
 use serde::Serialize;
 
