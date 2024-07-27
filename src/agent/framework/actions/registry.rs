@@ -179,7 +179,7 @@ mod tests {
 
     #[rstest::rstest]
     #[case("example.com/test")]
-    #[case("nodomain.test")]
+    #[case("no-domain.test")]
     #[case("action/with/many/splits")]
     fn metadata_build_allow_domains(#[case] kind: &str) {
         let handler = TestNoop {};
