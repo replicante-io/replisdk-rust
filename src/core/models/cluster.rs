@@ -5,6 +5,7 @@ use serde::Serialize;
 const DEFAULT_INTERVAL: i64 = 60;
 
 use super::action::ActionApproval;
+use super::node::NodeSearch;
 use super::platform::PlatformRef;
 
 pub use crate::platform::models::ClusterDefinition;
@@ -33,6 +34,10 @@ pub struct ClusterDeclaration {
     /// Grace period between scale up actions, in minutes.
     #[serde(default = "ClusterDeclaration::default_grace_up")]
     pub grace_up: u64,
+
+    /// Configure cluster initiation for brand new clusters.
+    #[serde(default)]
+    pub initialise: ClusterSpecInit,
 }
 
 impl Default for ClusterDeclaration {
@@ -42,6 +47,7 @@ impl Default for ClusterDeclaration {
             approval: ActionApproval::default(),
             definition: None,
             grace_up: Self::default_grace_up(),
+            initialise: ClusterSpecInit::default(),
         }
     }
 }
@@ -129,4 +135,58 @@ impl ClusterSpec {
     fn default_interval() -> i64 {
         DEFAULT_INTERVAL
     }
+}
+
+/// Configure cluster initiation for brand new clusters.
+#[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
+pub struct ClusterSpecInit {
+    /// Node action arguments passed to the cluster initialise action.
+    #[serde(default)]
+    pub action_args: serde_json::Value,
+
+    /// Grace period between cluster initialisation attempts, in minutes.
+    #[serde(default = "ClusterSpecInit::default_grace")]
+    pub grace: u64,
+
+    /// The initialisation mode appropriate to the software the cluster runs.
+    ///
+    /// By default cluster initialisation is not managed.
+    #[serde(default)]
+    pub mode: ClusterSpecInitMode,
+
+    /// Search definition for the node(s) to drive cluster initialisation through.
+    ///
+    /// By default the first node, sorted by `node_id` is used.
+    #[serde(default)]
+    pub search: Option<NodeSearch>,
+}
+
+impl ClusterSpecInit {
+    fn default_grace() -> u64 {
+        5
+    }
+}
+
+impl Default for ClusterSpecInit {
+    fn default() -> Self {
+        Self {
+            action_args: Default::default(),
+            grace: ClusterSpecInit::default_grace(),
+            mode: Default::default(),
+            search: None,
+        }
+    }
+}
+
+/// Supported initialisation modes appropriate to the software the cluster runs.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq, Serialize, Deserialize)]
+pub enum ClusterSpecInitMode {
+    /// Clusters are initialised automatically or otherwise outside of Replicante Core.
+    #[default]
+    #[serde(alias = "not-managed", alias = "not_managed")]
+    NotManaged,
+
+    /// A node is used to initialise a one-node cluster, additional nodes can later join this one.
+    #[serde(alias = "single-node", alias = "single_node")]
+    SingleNode,
 }

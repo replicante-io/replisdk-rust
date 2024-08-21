@@ -1,8 +1,14 @@
 {
   "rust-analyzer.cargo.features": "all",
   "cSpell.words": [
+    "envlogger",
+    "Repli",
     "Replicante",
+    "replisdk",
     "rstest",
+    "rusqlite",
+    "serde",
+    "stdlog",
     "thiserror"
   ]
 }
