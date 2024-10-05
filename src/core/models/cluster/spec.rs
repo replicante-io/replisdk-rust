@@ -4,8 +4,8 @@ use serde::Serialize;
 
 const DEFAULT_INTERVAL: i64 = 60;
 
-use crate::core::models::platform::PlatformRef;
 use super::ClusterDeclaration;
+use crate::core::models::platform::PlatformRef;
 
 /// Specification describing a cluster desired state and how to manage it.
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]

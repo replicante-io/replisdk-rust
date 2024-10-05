@@ -160,11 +160,10 @@ impl NodeDetails {
                 .as_ref()
                 .map(|extra| AttributeValueRef::String(extra)),
             attribute if attribute.starts_with("address.") => {
-                let mut name = attribute.splitn(1, '.').skip(1);
+                let mut name = attribute.splitn(2, '.').skip(1);
                 let name = name.next();
                 name.and_then(|name| {
-                    self
-                        .address
+                    self.address
                         .other
                         .get(name)
                         .map(|address| AttributeValueRef::String(address))

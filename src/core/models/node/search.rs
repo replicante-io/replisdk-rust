@@ -17,12 +17,12 @@ use super::AttributeMatcher;
 /// Node searches enable configuration of how to select the nodes these operations should
 /// target and in which ordering these should be targeted.
 ///
-/// ## [`Node`]s order
+/// ## `Node`s order
 ///
-/// A key concept is that [`Node`]s do not have a natural order:
+/// A key concept is that `Node`s do not have a natural order:
 /// different situations and uses call for a different orders, often user specified.
 ///
-/// For these reasons the [`Node`] comparison implementation logic must make some choices.
+/// For these reasons the `Node` comparison implementation logic must make some choices.
 /// While these choices are largely opinion-based it is more important for these rules
 /// to be clearly set and consistently applied.
 ///
@@ -51,9 +51,9 @@ use super::AttributeMatcher;
 /// But our use case does not require an absolute, fixed sort order and instead simply
 /// aims for users to tell us which nodes to pick/process "first".
 /// There is no need for (mathematical) correctness, just consistent results.
-/// Additionally `NaN` as a [`Node`] attribute feels like a rare and unexpected event.
+/// Additionally `NaN` as a `Node` attribute feels like a rare and unexpected event.
 ///
-/// For these reasons the [`Node`] sorting logic assumes that `NaN == NaN` even if this is wrong!
+/// For these reasons the `Node` sorting logic assumes that `NaN == NaN` even if this is wrong!
 #[derive(Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub struct NodeSearch {
     /// Select nodes that match the given attributes.

@@ -75,7 +75,7 @@ impl std::fmt::Display for AttributeMatcherOp {
     }
 }
 
-/// Reference to a typed value of a [`Node`] attribute.
+/// Reference to a typed value of a `Node` attribute.
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub enum AttributeValueRef<'a> {
     /// Represents a boolean attribute value.
