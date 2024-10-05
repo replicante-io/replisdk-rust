@@ -31,6 +31,7 @@ impl FakeAgent {
 impl NodeInfo for FakeAgent {
     async fn node_info(&self, _: &Context) -> Result<Node> {
         Ok(Node {
+            address: Default::default(),
             agent_version: AgentVersion {
                 checkout: "commit".into(),
                 number: "1.2.3".into(),

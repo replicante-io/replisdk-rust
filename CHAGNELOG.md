@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 - Platform provisioning models.
 - Prometheus metrics collection and export utilities for the `actix-web` framework.
 - RepliCore models: authentication and authorisation related models.
-- RepliCore models: cluster specification model.
+- RepliCore models: cluster specification models.
 - RepliCore models: namespace models.
 - RepliCore models: node information models.
 - RepliCore models: orchestrator actions.
