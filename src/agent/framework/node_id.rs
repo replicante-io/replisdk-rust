@@ -4,8 +4,8 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use slog::Logger;
 
-use crate::agent::framework::AgentConf;
 use crate::agent::framework::constants::ENV_NODE_ID;
+use crate::agent::framework::AgentConf;
 
 /// Errors encountered while attempting to detect the node ID.
 #[derive(Debug, thiserror::Error)]
