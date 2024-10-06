@@ -5,9 +5,7 @@ use serde::Serialize;
 use slog::Logger;
 
 use crate::agent::framework::AgentConf;
-
-/// Environment variable to look for the Node ID from.
-const ENV_NODE_ID: &str = "RA_NODE_ID";
+use crate::agent::framework::constants::ENV_NODE_ID;
 
 /// Errors encountered while attempting to detect the node ID.
 #[derive(Debug, thiserror::Error)]

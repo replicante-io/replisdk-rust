@@ -118,6 +118,7 @@ mod proc;
 mod trace;
 
 pub mod actions;
+pub mod constants;
 pub mod store;
 
 #[cfg(test)]
