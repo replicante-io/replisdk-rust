@@ -76,7 +76,7 @@ impl std::fmt::Display for AttributeMatcherOp {
 }
 
 /// Reference to a typed value of a `Node` attribute.
-#[derive(Clone, Debug, Default, Eq, PartialEq)]
+#[derive(Clone, Debug, Default, Eq)]
 pub enum AttributeValueRef<'a> {
     /// Represents a boolean attribute value.
     Boolean(bool),
@@ -85,11 +85,29 @@ pub enum AttributeValueRef<'a> {
     #[default]
     Null,
 
-    /// Represents a numeric attribute, based on JSON number representation.
-    Number(&'a Number),
+    /// Represents a numeric attribute, based on owned JSON number representation.
+    Number(Number),
+
+    /// Represents a numeric attribute, based on borrowed JSON number representation.
+    NumberRef(&'a Number),
 
     /// Represents a string attribute.
     String(&'a str),
+}
+
+impl<'a> std::cmp::PartialEq<AttributeValueRef<'a>> for AttributeValueRef<'a> {
+    fn eq(&self, other: &AttributeValueRef<'a>) -> bool {
+        match (self, other) {
+            (AttributeValueRef::Boolean(me), AttributeValueRef::Boolean(other)) => me.eq(other),
+            (AttributeValueRef::Null, AttributeValueRef::Null) => true,
+            (AttributeValueRef::Number(me), AttributeValueRef::Number(other)) => me.eq(other),
+            (AttributeValueRef::Number(me), AttributeValueRef::NumberRef(other)) => me.eq(other),
+            (AttributeValueRef::NumberRef(me), AttributeValueRef::Number(other)) => me.eq(&other),
+            (AttributeValueRef::NumberRef(me), AttributeValueRef::NumberRef(other)) => me.eq(other),
+            (AttributeValueRef::String(me), AttributeValueRef::String(other)) => me.eq(other),
+            _ => false,
+        }
+    }
 }
 
 impl<'a> From<&'a AttributeValue> for AttributeValueRef<'a> {
@@ -97,8 +115,116 @@ impl<'a> From<&'a AttributeValue> for AttributeValueRef<'a> {
         match value {
             AttributeValue::Boolean(value) => AttributeValueRef::Boolean(*value),
             AttributeValue::Null => AttributeValueRef::Null,
-            AttributeValue::Number(value) => AttributeValueRef::Number(value),
+            AttributeValue::Number(value) => AttributeValueRef::NumberRef(value),
             AttributeValue::String(value) => AttributeValueRef::String(value),
         }
+    }
+}
+
+impl<'a> From<u64> for AttributeValueRef<'a> {
+    fn from(value: u64) -> Self {
+        let number = Number::from(value);
+        AttributeValueRef::Number(number)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use serde_json::Number;
+
+    use super::AttributeValueRef;
+
+    #[rstest::rstest]
+    #[case(
+        AttributeValueRef::Boolean(true),
+        AttributeValueRef::Boolean(true),
+        true
+    )]
+    #[case(
+        AttributeValueRef::Boolean(true),
+        AttributeValueRef::Boolean(false),
+        false
+    )]
+    #[case(AttributeValueRef::Null, AttributeValueRef::Null, true)]
+    #[case(
+        AttributeValueRef::Number(Number::from(1)),
+        AttributeValueRef::Number(Number::from(1)),
+        true
+    )]
+    #[case(
+        AttributeValueRef::Number(Number::from(1)),
+        AttributeValueRef::Number(Number::from(2)),
+        false
+    )]
+    #[case(
+        AttributeValueRef::String("same"),
+        AttributeValueRef::String("same"),
+        true
+    )]
+    #[case(
+        AttributeValueRef::String("left"),
+        AttributeValueRef::String("right"),
+        false
+    )]
+    #[case(AttributeValueRef::Null, AttributeValueRef::Boolean(true), false)]
+    #[case(
+        AttributeValueRef::Null,
+        AttributeValueRef::Number(Number::from(0)),
+        false
+    )]
+    #[case(AttributeValueRef::Null, AttributeValueRef::String("some"), false)]
+    fn attribute_value_ref_eq(
+        #[case] left: AttributeValueRef<'_>,
+        #[case] right: AttributeValueRef<'_>,
+        #[case] should_eq: bool,
+    ) {
+        let are_eq = left.eq(&right);
+        assert_eq!(are_eq, should_eq);
+    }
+
+    #[rstest::rstest]
+    #[case(1, 1, true)]
+    #[case(1, 2, false)]
+    fn attribute_value_ref_eq_number_ref(
+        #[case] left: u64,
+        #[case] right: u64,
+        #[case] should_eq: bool,
+    ) {
+        let left = Number::from(left);
+        let left = AttributeValueRef::NumberRef(&left);
+        let right = Number::from(right);
+        let right = AttributeValueRef::NumberRef(&right);
+        let are_eq = left.eq(&right);
+        assert_eq!(are_eq, should_eq);
+    }
+
+    #[rstest::rstest]
+    #[case(1, 1, true)]
+    #[case(1, 2, false)]
+    fn attribute_value_ref_eq_number_ref_left(
+        #[case] left: u64,
+        #[case] right: u64,
+        #[case] should_eq: bool,
+    ) {
+        let left = AttributeValueRef::Number(Number::from(left));
+        let right = Number::from(right);
+        let right = AttributeValueRef::NumberRef(&right);
+        let are_eq = left.eq(&right);
+        assert_eq!(are_eq, should_eq);
+    }
+
+    #[rstest::rstest]
+    #[case(1, 1, true)]
+    #[case(1, 2, false)]
+    fn attribute_value_ref_eq_number_ref_right(
+        #[case] left: u64,
+        #[case] right: u64,
+        #[case] should_eq: bool,
+    ) {
+        let left = Number::from(left);
+        let left = AttributeValueRef::NumberRef(&left);
+        let right = AttributeValueRef::Number(Number::from(right));
+        let are_eq = left.eq(&right);
+        assert_eq!(are_eq, should_eq);
     }
 }

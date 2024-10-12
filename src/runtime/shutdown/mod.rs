@@ -87,7 +87,7 @@ pub enum ShutdownError {
 ///
 /// When the shutdown signal is received once the above mentioned shutdown sequence begins.
 /// If a second signal is sent to the process while shutdown is in progress the process is
-/// terminated abruptly [`std::process::exit`].
+/// terminated abruptly with [`std::process::exit`].
 ///
 /// Process signals are only used as an exit condition if an exit signal value is defined with
 /// [`ShutdownManagerBuilder::watch_signal`] or

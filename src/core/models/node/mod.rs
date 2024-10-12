@@ -84,6 +84,7 @@ impl Node {
     /// - Attribute `store_version.checkout` maps to [`StoreVersion::checkout`].
     /// - Attribute `store_version.number` maps to [`StoreVersion::number`].
     /// - Attribute `store_version.extra` maps to [`StoreVersion::extra`].
+    /// - Attribute `address.${name}` lookups `name` from [`NodeAddresses::other`].
     pub fn attribute<S>(&self, attribute: S) -> Option<AttributeValueRef>
     where
         S: AsRef<str>,
@@ -160,14 +161,12 @@ impl NodeDetails {
                 .as_ref()
                 .map(|extra| AttributeValueRef::String(extra)),
             attribute if attribute.starts_with("address.") => {
-                let mut name = attribute.splitn(2, '.').skip(1);
-                let name = name.next();
-                name.and_then(|name| {
-                    self.address
-                        .other
-                        .get(name)
-                        .map(|address| AttributeValueRef::String(address))
-                })
+                let start = "address.".len();
+                let name = &attribute[start..];
+                self.address
+                    .other
+                    .get(name)
+                    .map(|address| AttributeValueRef::String(address))
             }
             attribute => self.attributes.get(attribute).map(|value| value.into()),
         }
