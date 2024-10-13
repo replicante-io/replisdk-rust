@@ -160,17 +160,17 @@ utils-trace = ["anyhow", "opentelemetry", "pin-project-lite"]
 actix-http = { version = "^3.0", optional = true }
 actix-service = { version = "^2.0", optional = true }
 actix-web = { version = "^4.3", optional = true }
-actix-web-opentelemetry = { version = "^0.18", optional = true, features = ["sync-middleware"] }
+actix-web-opentelemetry = { version = "^0.19", optional = true, features = ["sync-middleware"] }
 anyhow = { version = "^1.0", features = ["backtrace"], optional = true }
 async-trait = { version = "^0.1", optional = true }
 futures = { version = "^0.3", optional = true }
 futures-util = { version = "^0.3", optional = true }
 once_cell = { version = "^1.18", optional = true }
 openssl = { version = "^0.10", optional = true }
-opentelemetry = { version = "^0.24", optional = true }
-opentelemetry_sdk = { version = "^0.24", optional = true, features = ["rt-tokio"] }
-opentelemetry-otlp = { version = "^0.17", optional = true }
-opentelemetry-semantic-conventions = { version = "^0.16", optional = true }
+opentelemetry = { version = "^0.26", optional = true }
+opentelemetry-otlp = { version = "^0.26", optional = true }
+opentelemetry-semantic-conventions = { version = "^0.26", optional = true }
+opentelemetry_sdk = { version = "^0.26", optional = true, features = ["rt-tokio"] }
 pin-project-lite = { version = "^0.2", optional = true }
 prometheus = { version = "^0.13", optional = true, features = ["process"] }
 refinery = { version = "^0.8", optional = true, features = ["rusqlite"] }
@@ -189,16 +189,14 @@ slog-term = { version = "^2.0", optional = true }
 thiserror = { version = "^1.0", optional = true }
 time = { version = "^0.3", optional = true, features = ["formatting", "parsing", "serde"] }
 tokio = { version = "^1.0", optional = true, features = ["macros", "rt", "rt-multi-thread", "signal", "sync", "time"] }
-uuid = { version = "^1.4", optional = true, features = ["serde", "v4"] }
-
-# Changes needed to support custom errors have not been published yet so point directly to repo.
 tokio-rusqlite = { version = "^0.5", optional = true }
+uuid = { version = "^1.4", optional = true, features = ["serde", "v4"] }
 
 # Always depend on the proc macros crate matching our exact version!
 replisdk-proc = { version = "=0.1.1", path = "./proc"}
 
 [dev-dependencies]
-rstest = "^0.21"
+rstest = "^0.23"
 serde_test = "^1.0"
 
 [package.metadata.docs.rs]
