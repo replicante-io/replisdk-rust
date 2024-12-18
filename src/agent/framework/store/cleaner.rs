@@ -37,11 +37,11 @@ impl StoreClean {
     {
         tokio::pin!(shutdown);
         slog::debug!(self.context.logger, "Starting background store cleaner");
-        let tracer = crate::agent::framework::trace::tracer();
+        let tracer = &*crate::agent::framework::trace::TRACER;
 
         loop {
             // Create a root span to trace activities of this loop.
-            let context = crate::utils::trace::root(&tracer, "store.clean");
+            let context = crate::utils::trace::root(tracer, "store.clean");
 
             // Execute a cleaning loop.
             let result = self

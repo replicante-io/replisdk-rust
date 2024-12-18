@@ -34,11 +34,11 @@ impl ActionsExecutor {
     {
         tokio::pin!(shutdown);
         slog::debug!(self.context.logger, "Starting actions execution");
-        let tracer = crate::agent::framework::trace::tracer();
+        let tracer = &*crate::agent::framework::trace::TRACER;
 
         loop {
             // Create a root span to trace activities of this loop.
-            let context = crate::utils::trace::root(&tracer, "action.executor");
+            let context = crate::utils::trace::root(tracer, "action.executor");
             let _timer = action::EXECUTE_LOOPS_DURATION.start_timer();
 
             // Look for next action to execute and invoke its handler.

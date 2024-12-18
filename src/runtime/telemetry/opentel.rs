@@ -4,6 +4,7 @@ use opentelemetry::propagation::TextMapCompositePropagator;
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::propagation;
 use opentelemetry_sdk::trace::Sampler as SdkSampler;
+use opentelemetry_sdk::trace::BatchSpanProcessor;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -105,21 +106,18 @@ impl From<SamplerMode> for SdkSampler {
 }
 
 /// Initialise the OpenTelemetry framework for the process.
-pub fn initialise(conf: OTelConfig, options: OTelOptions, logger: slog::Logger) -> Result<()> {
-    // Set up proper logging for unhandled errors (default is printing to standard error).
-    opentelemetry::global::set_error_handler(move |error| {
-        let error = anyhow::Error::from(error);
-        let attrs = crate::utils::error::slog::ErrorAttributes::from(&error);
-        slog::warn!(logger, "Unhandled OpenTelemetry error occurred"; attrs);
-    })?;
+pub fn initialise(conf: OTelConfig, options: OTelOptions, _logger: slog::Logger) -> Result<()> {
+    // OpenTelemetry internal logs now rely on Tokio Tracing.
+    // To Change their handling I'll need to learn Tokio Tracing, which is not a priority right now.
+    // TODO: reintroduce OTel logging hook when tracing is hooked in.
 
     // Skip further setup if tracing is not enabled.
     if !conf.enabled {
         return Ok(());
     }
 
-    // Create and configure OTel Exporter.
-    let mut exporter = opentelemetry_otlp::new_exporter().tonic();
+    // Configure OTel Traces Exporter.
+    let mut exporter = opentelemetry_otlp::SpanExporter::builder().with_tonic();
     if let Some(endpoint) = conf.endpoint {
         exporter = exporter.with_endpoint(endpoint);
     }
@@ -127,19 +125,19 @@ pub fn initialise(conf: OTelConfig, options: OTelOptions, logger: slog::Logger) 
         let timeout = std::time::Duration::from_secs(timeout);
         exporter = exporter.with_timeout(timeout);
     }
+    let exporter = exporter.build()?;
 
-    // Create and configure OTel Pipeline.
-    let pipeline_conf = opentelemetry_sdk::trace::Config::default()
-        .with_sampler(SdkSampler::from(conf.sampling))
-        .with_resource(options.resource);
-    let mut pipeline = opentelemetry_otlp::new_pipeline()
-        .tracing()
-        .with_exporter(exporter)
-        .with_trace_config(pipeline_conf);
+    // Configure OTel Traces Provider.
+    let mut provider_batch = BatchSpanProcessor::builder(exporter, opentelemetry_sdk::runtime::Tokio);
     if let Some(batch_config) = options.batch_config {
-        pipeline = pipeline.with_batch_config(batch_config);
+        provider_batch = provider_batch.with_batch_config(batch_config);
     }
-    pipeline.install_batch(opentelemetry_sdk::runtime::Tokio)?;
+    let provider = opentelemetry_sdk::trace::Builder::default()
+        .with_span_processor(provider_batch.build())
+        .with_sampler(SdkSampler::from(conf.sampling))
+        .with_resource(options.resource)
+        .build();
+    opentelemetry::global::set_tracer_provider(provider);
 
     // Configure the global text map propagator for contexts to cross process boundaries.
     let trace = propagation::TraceContextPropagator::new();
