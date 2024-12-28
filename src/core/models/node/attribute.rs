@@ -121,7 +121,7 @@ impl<'a> From<&'a AttributeValue> for AttributeValueRef<'a> {
     }
 }
 
-impl<'a> From<u64> for AttributeValueRef<'a> {
+impl From<u64> for AttributeValueRef<'_> {
     fn from(value: u64) -> Self {
         let number = Number::from(value);
         AttributeValueRef::Number(number)

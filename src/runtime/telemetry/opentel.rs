@@ -3,8 +3,8 @@ use anyhow::Result;
 use opentelemetry::propagation::TextMapCompositePropagator;
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::propagation;
-use opentelemetry_sdk::trace::Sampler as SdkSampler;
 use opentelemetry_sdk::trace::BatchSpanProcessor;
+use opentelemetry_sdk::trace::Sampler as SdkSampler;
 use serde::Deserialize;
 use serde::Serialize;
 
@@ -128,7 +128,8 @@ pub fn initialise(conf: OTelConfig, options: OTelOptions, _logger: slog::Logger)
     let exporter = exporter.build()?;
 
     // Configure OTel Traces Provider.
-    let mut provider_batch = BatchSpanProcessor::builder(exporter, opentelemetry_sdk::runtime::Tokio);
+    let mut provider_batch =
+        BatchSpanProcessor::builder(exporter, opentelemetry_sdk::runtime::Tokio);
     if let Some(batch_config) = options.batch_config {
         provider_batch = provider_batch.with_batch_config(batch_config);
     }

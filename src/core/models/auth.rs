@@ -99,7 +99,7 @@ impl<'de> Deserialize<'de> for Action {
     {
         /// Process `&str` or `String` from serde to deserialize an [`Action`].
         struct VisitAction;
-        impl<'de> Visitor<'de> for VisitAction {
+        impl Visitor<'_> for VisitAction {
             type Value = Action;
 
             fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {

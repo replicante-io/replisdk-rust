@@ -9,7 +9,7 @@ pub struct ErrorAttributes<'a> {
     error: &'a Error,
 }
 
-impl<'a> KV for ErrorAttributes<'a> {
+impl KV for ErrorAttributes<'_> {
     fn serialize(&self, _: &Record, serializer: &mut dyn Serializer) -> slog::Result {
         // Essential error information.
         let error_cause = self.error.root_cause().to_string();

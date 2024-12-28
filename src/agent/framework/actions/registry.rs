@@ -15,8 +15,6 @@ pub struct ActionMetadata {
     /// Identifier of the action implementation.
     pub(in crate::agent::framework) kind: String,
 
-    /// TODO: timeout,
-
     /// [`ActionHandler`] to invoke for [`ActionExecution`] with matching `kind`.
     pub(in crate::agent::framework) handler: Box<dyn ActionHandler>,
 }

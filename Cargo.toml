@@ -109,7 +109,15 @@ runtime-actix_builder = [
   "utils-actix_metrics",
 ]
 # Enable ShutdownManager and core tokio-based runtime utilities.
-runtime-shutdown = ["anyhow", "futures", "slog", "thiserror", "tokio"]
+runtime-shutdown = [
+  "anyhow",
+  "futures",
+  "slog",
+  "thiserror",
+  "tokio",
+
+  "utils-error_slog",
+  ]
 # Enable ShutdownManager extension to watch for `actix_web` servers.
 runtime-shutdown_actix = ["actix-web"]
 # Enable telemetry initialisation utilities.

@@ -39,6 +39,37 @@ async fn graceful_shutdown_timeout() {
 }
 
 #[tokio::test]
+async fn shutdown_handles() {
+    let mut shutdown = ShutdownManager::builder();
+
+    // Task to wait for exit and send a signal back.
+    let exit = shutdown.shutdown_handle();
+    let flag = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let flag_setter = std::sync::Arc::clone(&flag);
+    let task_exit = tokio::spawn(async move {
+        exit.wait().await;
+        flag_setter.store(true, std::sync::atomic::Ordering::SeqCst);
+        Ok(())
+    });
+
+    // Task to exit immediately (and therefore start shutdown).
+    let task_shutdown = tokio::spawn(async { Ok(()) });
+
+    // Wait for shutdown.
+    shutdown.watch_tokio(task_exit).watch_tokio(task_shutdown);
+    let shutdown = shutdown.build();
+
+    let test_timeout = std::time::Duration::from_secs(5);
+    tokio::select! {
+        result = shutdown.wait() => assert!(result.is_ok()),
+        _ = tokio::time::sleep(test_timeout) => panic!("ShutdownManager blocked too long"),
+    };
+
+    let flag = flag.load(std::sync::atomic::Ordering::SeqCst);
+    assert!(flag);
+}
+
+#[tokio::test]
 async fn shutdown_notifications() {
     let mut shutdown = ShutdownManager::builder();
 

@@ -49,6 +49,38 @@ pub enum ShutdownError {
     TokioTaskPanic,
 }
 
+/// Handle to wait for graceful shutdown notifications.
+#[derive(Clone, Debug)]
+pub struct ShutdownHandle {
+    /// Shutdown notification receiver.
+    receiver: watch::Receiver<bool>,
+}
+
+impl ShutdownHandle {
+    /// Wait for the handle to receive a shutdown notification.
+    ///
+    /// While this method consumes the handle, handles can be reused by cloning them first.
+    pub async fn wait(mut self) {
+        // If a signal was sent before we started waiting on it notify immediately.
+        if *self.receiver.borrow() {
+            return;
+        }
+
+        // Otherwise wait for a change or the sender side closing.
+        let _ = self.receiver.changed().await;
+    }
+}
+
+#[cfg(any(test, feature = "test-fixture"))]
+impl ShutdownHandle {
+    /// Create a `ShutdownHandle` along side its signalling half, for unit tests.
+    pub fn fixture() -> (ShutdownHandle, watch::Sender<bool>) {
+        let (sender, receiver) = watch::channel(false);
+        let handle = ShutdownHandle { receiver };
+        (handle, sender)
+    }
+}
+
 /// Manage process shutdown on error or user request, with support for clean-up chances.
 ///
 /// # Process shutdown
@@ -199,8 +231,7 @@ impl<T> ShutdownManager<T> {
                     Ok(Err(task_error)) => {
                         slog::error!(
                             logger, "Tokio task returned an error while shutting down";
-                            // TODO(anyhow-log-utils): Attach error as structured KV.
-                            "error" => %task_error,
+                            crate::utils::error::slog::ErrorAttributes::from(&task_error),
                         );
                     }
                 }
@@ -351,18 +382,17 @@ impl<T> ShutdownManagerBuilder<T> {
         self
     }
 
-    /// Return a future that resolves to notify graceful shutdown was requested.
-    pub fn shutdown_notification(&self) -> impl Future<Output = ()> {
-        let mut receiver = self.shutdown_notification_receiver.clone();
-        async move {
-            // If a signal was sent before we started waiting on it notify immediately.
-            if *receiver.borrow() {
-                return;
-            }
+    /// Return an handle to wait for graceful shutdown notifications.
+    pub fn shutdown_handle(&self) -> ShutdownHandle {
+        let receiver = self.shutdown_notification_receiver.clone();
+        ShutdownHandle { receiver }
+    }
 
-            // Otherwise wait for a change or the sender side closing.
-            let _ = receiver.changed().await;
-        }
+    /// Return a future that resolves to notify graceful shutdown was requested.
+    // TODO? Deprecate notifications in favour of handles?
+    pub fn shutdown_notification(&self) -> impl Future<Output = ()> {
+        let handle = self.shutdown_handle();
+        handle.wait()
     }
 
     /// Watch [`tokio::signal::ctrl_c`] for exit, returning the given value.
