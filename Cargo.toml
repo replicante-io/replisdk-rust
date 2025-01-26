@@ -168,7 +168,7 @@ utils-trace = ["anyhow", "opentelemetry", "pin-project-lite"]
 actix-http = { version = "^3.0", optional = true }
 actix-service = { version = "^2.0", optional = true }
 actix-web = { version = "^4.3", optional = true }
-actix-web-opentelemetry = { version = "^0.19", optional = true, features = ["sync-middleware"] }
+actix-web-opentelemetry = { version = "^0.20", optional = true, features = ["sync-middleware"] }
 anyhow = { version = "^1.0", features = ["backtrace"], optional = true }
 async-trait = { version = "^0.1", optional = true }
 futures = { version = "^0.3", optional = true }
@@ -183,7 +183,7 @@ pin-project-lite = { version = "^0.2", optional = true }
 prometheus = { version = "^0.13", optional = true, features = ["process"] }
 refinery = { version = "^0.8", optional = true, features = ["rusqlite"] }
 rusqlite = { version = "^0.31", optional = true, features = ["bundled"] }
-sentry = { version = "^0.35", optional = true }
+sentry = { version = "^0.36", optional = true }
 serde = { version = "^1.0", optional = true, features = ["derive"] }
 serde_json = { version = "^1.0", optional = true }
 serde_yaml = { version = "^0.9", optional = true }
@@ -204,7 +204,7 @@ uuid = { version = "^1.4", optional = true, features = ["serde", "v4"] }
 replisdk-proc = { version = "=0.1.1", path = "./proc"}
 
 [dev-dependencies]
-rstest = "^0.23"
+rstest = "^0.24"
 serde_test = "^1.0"
 
 [package.metadata.docs.rs]
