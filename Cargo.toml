@@ -160,7 +160,7 @@ utils-error_json = ["anyhow", "serde_json", "thiserror"]
 # Provides a standard way to log errors as slog key/value pairs.
 utils-error_slog = ["anyhow", "slog"]
 # Utilities to introspect applications and libraries with metrics more easley.
-utils-metrics = ["prometheus"]
+utils-metrics = ["pin-project-lite", "prometheus"]
 # Utilities to introspect applications and libraries with traces more easley.
 utils-trace = ["anyhow", "opentelemetry", "pin-project-lite"]
 
