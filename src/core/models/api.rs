@@ -205,6 +205,9 @@ pub struct PlatformEntry {
 
     /// Namespaced identifier of the Platform.
     pub name: String,
+
+    /// Namespace of the Platform.
+    pub ns_id: String,
 }
 
 mod deserialize {
